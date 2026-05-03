@@ -101,14 +101,15 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Run tfsec
-        # tfsec emits SARIF natively. We invoke directly rather than via the
-        # action so we can produce SARIF AND fail the build in one pass.
+        # tfsec emits SARIF natively for the merge job. We don't fail the
+        # build on tfsec findings because Trivy (next job) catches the same
+        # AVD-* misconfigs and honors our .trivyignore allow-list, and tfsec
+        # doesn't respect that file. Keep tfsec for the merged report's
+        # rule-name diversity (occasionally tfsec catches things Trivy misses).
         run: |
           curl -sSL https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh \
             | sudo bash
           tfsec infra/aws --format sarif --out tfsec.sarif --soft-fail
-          # Re-run for exit code (sarif output mode suppresses non-zero).
-          tfsec infra/aws
 
       - name: Upload tfsec SARIF
         if: always() && hashFiles('tfsec.sarif') != ''
