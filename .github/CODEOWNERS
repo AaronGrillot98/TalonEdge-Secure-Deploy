@@ -1,0 +1,19 @@
+# CODEOWNERS — required reviewer auto-assignment.
+# Branch protection requires every PR to be reviewed by a code owner.
+# Last match wins, so most-specific patterns go at the bottom.
+#
+# See: https://docs.github.com/en/repositories/managing-your-repositories-settings-and-security/customizing-your-repository/about-code-owners
+
+# Global default — every file needs the repo owner's review.
+*                                @AaronGrillot98
+
+# Security-critical paths get an explicit ownership claim so future reviewers
+# can see at a glance that these areas are intentionally locked down.
+/.github/workflows/              @AaronGrillot98
+/infra/                          @AaronGrillot98
+/policies/                       @AaronGrillot98
+/src/talonedge/artifact.py       @AaronGrillot98
+/src/talonedge/policy.py         @AaronGrillot98
+/SECURITY.md                     @AaronGrillot98
+/docs/COMPLIANCE.md              @AaronGrillot98
+/.trivyignore                    @AaronGrillot98
