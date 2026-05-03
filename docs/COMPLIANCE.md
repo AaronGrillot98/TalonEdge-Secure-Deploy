@@ -133,6 +133,8 @@ shorthand because that is the language DoD contractors use day-to-day.
 | Build runs on isolated, ephemeral worker | | | ✓ | GitHub-hosted runner — fresh ephemeral VM per job |
 | Provenance non-forgeable (build platform's signing key not user-accessible) | | | ✓ | OIDC identity is bound to the exact workflow ref `refs/heads/main` and verified against `expected_identity` at deploy time. Users cannot mint a token claiming to be that workflow. |
 
+**Implementation status:** L3 implemented in commit `<set after push>`. `deploy-aws.yml` generates a SLSA Provenance v1 predicate from `github.*` context, attests it via `cosign attest-blob --type slsaprovenance1 --new-bundle-format`, and verifies it twice (cosign + Python). The Python verifier rejects any bundle whose subject digest does not equal the payload SHA-256, whose predicate type is not `https://slsa.dev/provenance/v1`, or whose signing identity is not the configured workflow ref.
+
 ### What independently verifies the L3 claim
 
 1. **Cosign verify-blob** with `--certificate-identity` set to the exact

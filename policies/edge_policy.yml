@@ -2,6 +2,7 @@ controls:
   require_trusted_artifacts: true
   require_sbom: true
   require_signature: true
+  require_provenance: true
   require_disk_encryption: true
   max_patch_age_days: 30
   failed_login_limit: 5

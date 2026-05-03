@@ -23,11 +23,15 @@ from typing import Any, Protocol
 
 
 IN_TOTO_PAYLOAD_TYPE = "application/vnd.in-toto+json"
-SUPPORTED_PREDICATE_TYPES = (
+SBOM_PREDICATE_TYPES = (
     "https://cyclonedx.org/bom",
     "https://spdx.dev/Document",
+)
+PROVENANCE_PREDICATE_TYPES = (
     "https://slsa.dev/provenance/v1",
 )
+# Backwards-compat alias kept so older callers that imported the union still work.
+SUPPORTED_PREDICATE_TYPES = SBOM_PREDICATE_TYPES + PROVENANCE_PREDICATE_TYPES
 
 
 def sha256_file(path: Path) -> str:
@@ -131,37 +135,64 @@ def _verify_payload_signature(
     return {"verified": True, "reason": "ok", "identity": policy.identity, "issuer": policy.issuer}
 
 
-def _verify_sbom_attestation(
+def _provenance_summary(predicate: dict[str, Any]) -> dict[str, Any]:
+    """Pull the auditor-relevant fields out of a SLSA Provenance v1 predicate."""
+    bd = predicate.get("buildDefinition") or {}
+    rd = predicate.get("runDetails") or {}
+    builder = (rd.get("builder") or {}).get("id", "")
+    metadata = rd.get("metadata") or {}
+    return {
+        "build_type": bd.get("buildType", ""),
+        "builder_id": builder,
+        "invocation_id": metadata.get("invocationId", ""),
+        "started_on": metadata.get("startedOn", ""),
+        "external_parameters": bd.get("externalParameters") or {},
+        "resolved_dependencies": bd.get("resolvedDependencies") or [],
+    }
+
+
+def _verify_dsse_attestation(
     payload_path: Path,
     bundle_path: Path,
     policy: TrustPolicy,
     get_verifier,
+    *,
+    allowed_predicate_types: tuple[str, ...],
+    extra_keys: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    """Verify a DSSE / in-toto attestation bundle.
+
+    Generic over predicate type so the same code path verifies an SBOM
+    (CycloneDX / SPDX) and a SLSA Provenance attestation. Callers pin the
+    accepted predicate types so a Provenance bundle cannot be substituted
+    for an SBOM bundle (or vice versa).
+
+    ``extra_keys`` lets each caller seed the failure-shape with the keys it
+    needs (e.g. ``components: []`` for SBOM, ``summary: {}`` for provenance)
+    so result-dict shape is stable whether verification succeeds or fails.
+    """
+    base = {"verified": False, "reason": "", **(extra_keys or {})}
     try:
         bundle_json = _read_bundle(bundle_path)
     except FileNotFoundError as exc:
-        return {"verified": False, "reason": str(exc), "components": []}
+        return {**base, "reason": str(exc)}
     try:
         verifier = get_verifier()
         payload_type, payload_bytes = verifier.verify_dsse(bundle_json=bundle_json, policy=policy)
     except Exception as exc:
-        return {
-            "verified": False,
-            "reason": f"attestation verification failed: {exc.__class__.__name__}: {exc}",
-            "components": [],
-        }
+        return {**base, "reason": f"attestation verification failed: {exc.__class__.__name__}: {exc}"}
 
     if payload_type != IN_TOTO_PAYLOAD_TYPE:
-        return {"verified": False, "reason": f"unexpected DSSE payloadType: {payload_type}", "components": []}
+        return {**base, "reason": f"unexpected DSSE payloadType: {payload_type}"}
 
     try:
         statement = json.loads(payload_bytes)
     except (json.JSONDecodeError, UnicodeDecodeError) as exc:
-        return {"verified": False, "reason": f"in-toto statement is not valid JSON: {exc}", "components": []}
+        return {**base, "reason": f"in-toto statement is not valid JSON: {exc}"}
 
     predicate_type = statement.get("predicateType", "")
-    if predicate_type not in SUPPORTED_PREDICATE_TYPES:
-        return {"verified": False, "reason": f"unsupported predicateType: {predicate_type}", "components": []}
+    if predicate_type not in allowed_predicate_types:
+        return {**base, "reason": f"unsupported predicateType: {predicate_type}"}
 
     actual_sha = sha256_file(payload_path)
     subjects = statement.get("subject") or []
@@ -170,21 +201,47 @@ def _verify_sbom_attestation(
         for subject in subjects
     )
     if not subject_match:
-        return {
-            "verified": False,
-            "reason": "in-toto subject digest does not match payload sha256",
-            "components": [],
-        }
+        return {**base, "reason": "in-toto subject digest does not match payload sha256"}
 
-    components = _components_from_predicate(statement.get("predicate") or {})
     return {
+        **base,
         "verified": True,
         "reason": "ok",
         "predicate_type": predicate_type,
-        "components": components,
+        "statement": statement,
         "identity": policy.identity,
         "issuer": policy.issuer,
     }
+
+
+def _verify_sbom_attestation(payload_path, bundle_path, policy, get_verifier) -> dict[str, Any]:
+    result = _verify_dsse_attestation(
+        payload_path,
+        bundle_path,
+        policy,
+        get_verifier,
+        allowed_predicate_types=SBOM_PREDICATE_TYPES,
+        extra_keys={"components": []},
+    )
+    if result.get("verified"):
+        statement = result.pop("statement", {})
+        result["components"] = _components_from_predicate(statement.get("predicate") or {})
+    return result
+
+
+def _verify_provenance_attestation(payload_path, bundle_path, policy, get_verifier) -> dict[str, Any]:
+    result = _verify_dsse_attestation(
+        payload_path,
+        bundle_path,
+        policy,
+        get_verifier,
+        allowed_predicate_types=PROVENANCE_PREDICATE_TYPES,
+        extra_keys={"summary": {}},
+    )
+    if result.get("verified"):
+        statement = result.pop("statement", {})
+        result["summary"] = _provenance_summary(statement.get("predicate") or {})
+    return result
 
 
 def verify_artifact(
@@ -225,13 +282,16 @@ def verify_artifact(
     manifest_dir = manifest_path.parent
     bundle_field = manifest.get("sigstore_bundle")
     sbom_field = manifest.get("sbom_attestation")
+    provenance_field = manifest.get("provenance_attestation")
 
     if not hash_ok:
         signature = {"verified": False, "reason": "payload sha256 mismatch — refusing to verify signature"}
         sbom = {"verified": False, "reason": "payload sha256 mismatch — refusing to verify SBOM", "components": []}
+        provenance = {"verified": False, "reason": "payload sha256 mismatch — refusing to verify provenance", "summary": {}}
     elif policy is None:
         signature = {"verified": False, "reason": "no trust policy supplied (set expected_identity/expected_issuer in manifest or pass --identity/--issuer)"}
         sbom = {"verified": False, "reason": "no trust policy supplied", "components": []}
+        provenance = {"verified": False, "reason": "no trust policy supplied", "summary": {}}
     else:
         # Build the real verifier at most once, and only when a bundle file
         # is actually on disk. This keeps the demo path on Windows from
@@ -253,8 +313,18 @@ def verify_artifact(
             if sbom_field
             else {"verified": False, "reason": "manifest is missing sbom_attestation", "components": []}
         )
+        provenance = (
+            _verify_provenance_attestation(payload_path, manifest_dir / provenance_field, policy, get_verifier)
+            if provenance_field
+            else {"verified": False, "reason": "manifest is missing provenance_attestation", "summary": {}}
+        )
 
     trusted = hash_ok and signature["verified"] and sbom["verified"]
+    # SLSA Build L3 unforgeability requires a verified provenance attestation
+    # whose subject digest binds to this artifact and whose signing identity
+    # matches the configured workflow.
+    slsa_build_l3 = trusted and provenance["verified"]
+
     return {
         "name": manifest.get("name", payload_path.name),
         "version": manifest.get("version", "unknown"),
@@ -265,5 +335,7 @@ def verify_artifact(
         "sbom": sbom,
         "sbom_present": sbom["verified"],
         "components": sbom.get("components", []),
+        "provenance": provenance,
+        "slsa_build_l3": slsa_build_l3,
         "trusted": trusted,
     }

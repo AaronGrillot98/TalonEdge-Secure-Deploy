@@ -37,10 +37,12 @@ def run_scan(policy: TrustPolicy | None) -> dict:
 
 def _print_summary(result: dict) -> None:
     artifact = result["artifact"]
-    print(f"Artifact trusted: {artifact['trusted']}")
-    print(f"  hash_ok:   {artifact['hash_ok']}  (expected={artifact['expected_sha256']} actual={artifact['actual_sha256']})")
-    print(f"  signature: {artifact['signature']['verified']}  ({artifact['signature']['reason']})")
-    print(f"  sbom:      {artifact['sbom']['verified']}  ({artifact['sbom']['reason']})")
+    provenance = artifact.get("provenance", {})
+    print(f"Artifact trusted: {artifact['trusted']}  (SLSA L3: {artifact.get('slsa_build_l3', False)})")
+    print(f"  hash_ok:    {artifact['hash_ok']}  (expected={artifact['expected_sha256']} actual={artifact['actual_sha256']})")
+    print(f"  signature:  {artifact['signature']['verified']}  ({artifact['signature']['reason']})")
+    print(f"  sbom:       {artifact['sbom']['verified']}  ({artifact['sbom']['reason']})")
+    print(f"  provenance: {provenance.get('verified', False)}  ({provenance.get('reason', 'not configured')})")
     print(f"Risk level: {result['risk']['level']} ({result['risk']['score']}/100)")
     if result["findings"]:
         print("Findings:")

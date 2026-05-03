@@ -46,6 +46,8 @@ jobs:
       SBOM_FILE: artifacts/sample_payload.sbom.cdx.json
       SIG_BUNDLE: artifacts/sample_payload.sigstore.bundle.json
       ATT_BUNDLE: artifacts/sample_payload.sbom.attest.bundle.json
+      PROV_FILE: artifacts/sample_payload.provenance.json
+      PROV_BUNDLE: artifacts/sample_payload.provenance.attest.bundle.json
 
     steps:
       - name: Checkout
@@ -104,6 +106,79 @@ jobs:
             --bundle "${ATT_BUNDLE}" \
             "${PAYLOAD}"
 
+      - name: Generate SLSA Provenance v1 predicate
+        env:
+          GH_REPO: ${{ github.repository }}
+          GH_REF: ${{ github.ref }}
+          GH_SHA: ${{ github.sha }}
+          GH_EVENT: ${{ github.event_name }}
+          GH_RUN_ID: ${{ github.run_id }}
+          GH_RUN_ATTEMPT: ${{ github.run_attempt }}
+          GH_ACTOR: ${{ github.actor }}
+        run: |
+          # SLSA v1.0 Build Track predicate. The buildType URI is project-defined;
+          # external/internalParameters describe the workflow trigger surface;
+          # resolvedDependencies pins the source. Builder ID points at the
+          # GitHub-hosted runner per SLSA recommendation.
+          STARTED_ON="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          jq -n \
+            --arg repo        "$GH_REPO" \
+            --arg ref         "$GH_REF" \
+            --arg sha         "$GH_SHA" \
+            --arg event       "$GH_EVENT" \
+            --arg run_id      "$GH_RUN_ID" \
+            --arg run_attempt "$GH_RUN_ATTEMPT" \
+            --arg actor       "$GH_ACTOR" \
+            --arg started     "$STARTED_ON" \
+            '{
+              buildDefinition: {
+                buildType: "https://github.com/AaronGrillot98/TalonEdge-Secure-Deploy/buildType/v1",
+                externalParameters: {
+                  workflow: {
+                    ref: $ref,
+                    repository: ("https://github.com/" + $repo),
+                    path: ".github/workflows/deploy-aws.yml"
+                  },
+                  trigger: $event
+                },
+                internalParameters: {
+                  github: {
+                    actor: $actor,
+                    event_name: $event,
+                    runner_environment: "github-hosted"
+                  }
+                },
+                resolvedDependencies: [
+                  {
+                    uri: ("git+https://github.com/" + $repo + "@" + $ref),
+                    digest: { gitCommit: $sha }
+                  }
+                ]
+              },
+              runDetails: {
+                builder: {
+                  id: "https://github.com/actions/runner/github-hosted"
+                },
+                metadata: {
+                  invocationId: ("https://github.com/" + $repo + "/actions/runs/" + $run_id + "/attempts/" + $run_attempt),
+                  startedOn: $started
+                }
+              }
+            }' > "${PROV_FILE}"
+          echo "Provenance predicate:"
+          cat "${PROV_FILE}"
+
+      - name: Cosign attest-blob (SLSA Provenance v1, keyless)
+        env:
+          COSIGN_YES: "true"
+        run: |
+          cosign attest-blob \
+            --new-bundle-format \
+            --predicate "${PROV_FILE}" \
+            --type slsaprovenance1 \
+            --bundle "${PROV_BUNDLE}" \
+            "${PAYLOAD}"
+
       - name: Cosign verify-blob (defense-in-depth, before deploy)
         run: |
           cosign verify-blob \
@@ -117,6 +192,15 @@ jobs:
           cosign verify-blob-attestation \
             --bundle "${ATT_BUNDLE}" \
             --type cyclonedx \
+            --certificate-identity "${EXPECTED_IDENTITY}" \
+            --certificate-oidc-issuer "${EXPECTED_ISSUER}" \
+            "${PAYLOAD}"
+
+      - name: Cosign verify SLSA Provenance attestation
+        run: |
+          cosign verify-blob-attestation \
+            --bundle "${PROV_BUNDLE}" \
+            --type slsaprovenance1 \
             --certificate-identity "${EXPECTED_IDENTITY}" \
             --certificate-oidc-issuer "${EXPECTED_ISSUER}" \
             "${PAYLOAD}"

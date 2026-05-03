@@ -13,7 +13,7 @@ import pytest
 
 from talonedge.artifact import IN_TOTO_PAYLOAD_TYPE, TrustPolicy, verify_artifact
 
-from .conftest import make_in_toto_statement, write_manifest
+from .conftest import make_in_toto_statement, make_provenance_statement, write_manifest
 
 
 def test_missing_payload_raises(tmp_path):
@@ -245,6 +245,96 @@ def test_caller_policy_overrides_manifest_policy(workspace, fake_verifier):
     assert result["trusted"] is True
     assert fake_verifier.artifact_calls[0]["policy"] == override
     assert fake_verifier.dsse_calls[0]["policy"] == override
+
+
+def test_no_provenance_field_keeps_trusted_but_not_l3(workspace, fake_verifier):
+    """Backward compat: manifests without provenance_attestation still get trusted=True."""
+    write_manifest(workspace["manifest"], sha=workspace["sha"])  # no `prov` arg
+    workspace["sig_bundle"].write_text("{}", encoding="utf-8")
+    workspace["att_bundle"].write_text("{}", encoding="utf-8")
+    fake_verifier.verify_artifact_ok = True
+    fake_verifier.dsse_payload = make_in_toto_statement(subject_sha=workspace["sha"])
+
+    result = verify_artifact(workspace["payload"], workspace["manifest"], verifier=fake_verifier)
+
+    assert result["trusted"] is True
+    assert result["slsa_build_l3"] is False
+    assert result["provenance"]["verified"] is False
+    assert "missing provenance_attestation" in result["provenance"]["reason"]
+
+
+def test_provenance_field_present_but_bundle_missing_yields_no_l3(workspace, fake_verifier):
+    write_manifest(workspace["manifest"], sha=workspace["sha"], prov="payload.provenance.attest.bundle.json")
+    workspace["sig_bundle"].write_text("{}", encoding="utf-8")
+    workspace["att_bundle"].write_text("{}", encoding="utf-8")
+    # No prov_bundle written.
+    fake_verifier.verify_artifact_ok = True
+    fake_verifier.dsse_payload = make_in_toto_statement(subject_sha=workspace["sha"])
+
+    result = verify_artifact(workspace["payload"], workspace["manifest"], verifier=fake_verifier)
+
+    assert result["slsa_build_l3"] is False
+    assert "Sigstore bundle not found" in result["provenance"]["reason"]
+
+
+def test_full_l3_path_with_sbom_and_provenance(workspace, fake_verifier):
+    write_manifest(workspace["manifest"], sha=workspace["sha"], prov="payload.provenance.attest.bundle.json")
+    workspace["sig_bundle"].write_text("{}", encoding="utf-8")
+    workspace["att_bundle"].write_text("{}", encoding="utf-8")
+    workspace["prov_bundle"].write_text("{}", encoding="utf-8")
+    fake_verifier.verify_artifact_ok = True
+    # DSSE responses are pulled in order: SBOM first, then Provenance.
+    fake_verifier.dsse_responses = [
+        (IN_TOTO_PAYLOAD_TYPE, make_in_toto_statement(subject_sha=workspace["sha"]), None),
+        (IN_TOTO_PAYLOAD_TYPE, make_provenance_statement(subject_sha=workspace["sha"]), None),
+    ]
+
+    result = verify_artifact(workspace["payload"], workspace["manifest"], verifier=fake_verifier)
+
+    assert result["trusted"] is True
+    assert result["slsa_build_l3"] is True
+    assert result["provenance"]["verified"] is True
+    assert result["provenance"]["predicate_type"] == "https://slsa.dev/provenance/v1"
+    summary = result["provenance"]["summary"]
+    assert "github-hosted" in summary["builder_id"]
+    assert summary["invocation_id"].startswith("https://github.com/")
+    assert summary["started_on"] == "2026-05-03T01:00:00Z"
+
+
+def test_sbom_bundle_substituted_for_provenance_rejected(workspace, fake_verifier):
+    """A CycloneDX statement returned in the provenance slot must be rejected
+    because the predicate-type allow-list for that slot is SLSA-only."""
+    write_manifest(workspace["manifest"], sha=workspace["sha"], prov="payload.provenance.attest.bundle.json")
+    workspace["sig_bundle"].write_text("{}", encoding="utf-8")
+    workspace["att_bundle"].write_text("{}", encoding="utf-8")
+    workspace["prov_bundle"].write_text("{}", encoding="utf-8")
+    fake_verifier.verify_artifact_ok = True
+    fake_verifier.dsse_responses = [
+        (IN_TOTO_PAYLOAD_TYPE, make_in_toto_statement(subject_sha=workspace["sha"]), None),  # sbom OK
+        (IN_TOTO_PAYLOAD_TYPE, make_in_toto_statement(subject_sha=workspace["sha"]), None),  # cyclonedx in prov slot
+    ]
+
+    result = verify_artifact(workspace["payload"], workspace["manifest"], verifier=fake_verifier)
+
+    assert result["slsa_build_l3"] is False
+    assert "unsupported predicateType" in result["provenance"]["reason"]
+
+
+def test_provenance_subject_digest_mismatch_rejected(workspace, fake_verifier):
+    write_manifest(workspace["manifest"], sha=workspace["sha"], prov="payload.provenance.attest.bundle.json")
+    workspace["sig_bundle"].write_text("{}", encoding="utf-8")
+    workspace["att_bundle"].write_text("{}", encoding="utf-8")
+    workspace["prov_bundle"].write_text("{}", encoding="utf-8")
+    fake_verifier.verify_artifact_ok = True
+    fake_verifier.dsse_responses = [
+        (IN_TOTO_PAYLOAD_TYPE, make_in_toto_statement(subject_sha=workspace["sha"]), None),
+        (IN_TOTO_PAYLOAD_TYPE, make_provenance_statement(subject_sha="b" * 64), None),  # wrong digest
+    ]
+
+    result = verify_artifact(workspace["payload"], workspace["manifest"], verifier=fake_verifier)
+
+    assert result["slsa_build_l3"] is False
+    assert "subject digest does not match" in result["provenance"]["reason"]
 
 
 def test_spdx_attestation_extracts_packages_as_components(workspace, fake_verifier):

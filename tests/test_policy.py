@@ -15,6 +15,7 @@ def _trusted_artifact():
         "sbom_present": True,
         "signature": {"verified": True, "reason": "ok"},
         "sbom": {"verified": True, "reason": "ok"},
+        "provenance": {"verified": True, "reason": "ok"},
     }
 
 
@@ -65,6 +66,29 @@ def test_unverified_signature_yields_critical():
     sig_findings = [f for f in findings if f["control"] == "SIGNATURE_REQUIRED"]
     assert sig_findings and sig_findings[0]["severity"] == "critical"
     assert "Rekor" in sig_findings[0]["message"]
+
+
+def test_require_provenance_default_false_is_quiet():
+    policy = {"controls": {"require_trusted_artifacts": False, "require_sbom": False, "require_signature": False}}
+    artifact = {**_trusted_artifact(), "provenance": {"verified": False, "reason": "missing"}}
+    findings = evaluate_policy(policy, _healthy_telemetry(), artifact)
+    assert not any(f["control"] == "PROVENANCE_REQUIRED" for f in findings)
+
+
+def test_require_provenance_true_with_unverified_yields_high():
+    policy = {
+        "controls": {
+            "require_trusted_artifacts": False,
+            "require_sbom": False,
+            "require_signature": False,
+            "require_provenance": True,
+        }
+    }
+    artifact = {**_trusted_artifact(), "provenance": {"verified": False, "reason": "subject digest mismatch"}}
+    findings = evaluate_policy(policy, _healthy_telemetry(), artifact)
+    prov_findings = [f for f in findings if f["control"] == "PROVENANCE_REQUIRED"]
+    assert prov_findings and prov_findings[0]["severity"] == "high"
+    assert "subject digest mismatch" in prov_findings[0]["message"]
 
 
 def test_disk_not_encrypted_yields_high():
