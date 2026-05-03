@@ -279,8 +279,16 @@ resource "aws_iam_role" "github_deploy" {
           StringEquals = {
             "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
           }
+          # When a job declares `environment: production`, GitHub's OIDC token
+          # `sub` becomes `repo:<owner>/<repo>:environment:<name>` instead of
+          # the branch-ref form. We allow both so the gate (which lives in
+          # GitHub's environment protection rules) is the source of truth and
+          # the IAM trust policy is permissive of either claim shape.
           StringLike = {
-            "token.actions.githubusercontent.com:sub" = "repo:${var.github_repo}:ref:refs/heads/main"
+            "token.actions.githubusercontent.com:sub" = [
+              "repo:${var.github_repo}:environment:production",
+              "repo:${var.github_repo}:ref:refs/heads/main",
+            ]
           }
         }
       }
