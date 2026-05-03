@@ -49,10 +49,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Set up Python
-        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: "3.11"
 
@@ -128,16 +128,34 @@ jobs:
             --issuer "${EXPECTED_ISSUER}"
           test -f reports/index.html
 
+      # ---------------------------------------------------------------
+      # AWS publish steps. Skipped cleanly when vars.AWS_ROLE_ARN is unset
+      # (i.e. before the one-time `terraform apply`) so the build/sign/verify
+      # half of the pipeline still runs and reports green on every push.
+      # ---------------------------------------------------------------
+      - name: AWS deploy gate
+        id: gate
+        run: |
+          if [ -z "${{ vars.AWS_ROLE_ARN }}" ]; then
+            echo "AWS_ROLE_ARN not set — skipping deploy. Run terraform apply and set repo vars to enable."
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Configure AWS credentials with OIDC
+        if: steps.gate.outputs.configured == 'true'
         uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
         with:
           role-to-assume: ${{ vars.AWS_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
 
       - name: Deploy report to S3
+        if: steps.gate.outputs.configured == 'true'
         run: aws s3 sync reports/ "s3://${{ vars.S3_BUCKET }}/" --delete
 
       - name: Invalidate CloudFront cache
+        if: steps.gate.outputs.configured == 'true'
         run: |
           aws cloudfront create-invalidation \
             --distribution-id "${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}" \
@@ -145,5 +163,9 @@ jobs:
 
       - name: Deployment summary
         run: |
-          echo "TalonEdge deploy complete."
-          echo "URL: https://${{ vars.CLOUDFRONT_DOMAIN }}"
+          if [ "${{ steps.gate.outputs.configured }}" = "true" ]; then
+            echo "TalonEdge deploy complete."
+            echo "URL: https://${{ vars.CLOUDFRONT_DOMAIN }}"
+          else
+            echo "Build + sign + verify succeeded. AWS deploy skipped (vars not set)."
+          fi
