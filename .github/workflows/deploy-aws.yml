@@ -67,11 +67,7 @@ jobs:
         run: python -m pytest tests -q
 
       - name: Install cosign
-        # cosign-installer SHA above resolves to v3.5.0 (defaults to cosign 2.2.x,
-        # which produces the legacy bundle format). Pin cosign-release explicitly
-        # to v2.4.x so we get the v0.3 Sigstore Bundle that sigstore-python 4.x
-        # can parse via Bundle.from_json.
-        uses: sigstore/cosign-installer@dc72c7d5c4d10cd6bcb8cf6e3fd625a9e5e537da # v3.5.0
+        uses: sigstore/cosign-installer@d58896d6a1865668819e1d91763c7751a165e159 # v3.9.2
         with:
           cosign-release: 'v2.4.3'
 
@@ -88,13 +84,21 @@ jobs:
         env:
           COSIGN_YES: "true"
         run: |
-          cosign sign-blob --bundle "${SIG_BUNDLE}" "${PAYLOAD}"
+          # --new-bundle-format emits the v0.3 protobuf-JSON Sigstore Bundle
+          # that sigstore-python 4.x's Bundle.from_json expects. Without this
+          # flag cosign writes a legacy 'base64Signature' bundle that 4.x
+          # rejects as "Extra inputs are not permitted".
+          cosign sign-blob \
+            --new-bundle-format \
+            --bundle "${SIG_BUNDLE}" \
+            "${PAYLOAD}"
 
       - name: Cosign attest-blob (CycloneDX SBOM, keyless)
         env:
           COSIGN_YES: "true"
         run: |
           cosign attest-blob \
+            --new-bundle-format \
             --predicate "${SBOM_FILE}" \
             --type cyclonedx \
             --bundle "${ATT_BUNDLE}" \
