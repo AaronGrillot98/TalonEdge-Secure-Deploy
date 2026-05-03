@@ -19,6 +19,67 @@ TalonEdge validates software before it reaches edge systems through a real crypt
 
 Designed for SecDevOps, DoD / forward-deployed, and Cloud Security conversations.
 
+## Visual evidence
+
+The pipeline working end-to-end, captured against the live deploy.
+
+### 1 · The live operator report
+
+Trust is **cryptographic**, not declarative. Hash check, Sigstore signature, SBOM attestation, and SLSA Build L3 Provenance all show **VERIFIED** because each one was independently re-checked by the Python verifier in CI.
+
+[![Live operator report on CloudFront](docs/screenshots/01-live-cloudfront-report.png)](docs/screenshots/01-live-cloudfront-report.png)
+
+### 2 · Cryptographic verification stdout
+
+The `talonedge verify` step in the deploy workflow prints:
+
+[![talonedge verify stdout — Artifact trusted: True (SLSA L3: True)](docs/screenshots/11-talonedge-verify-stdout.png)](docs/screenshots/11-talonedge-verify-stdout.png)
+
+Four green ticks: hash + signature + SBOM + SLSA Provenance. Any single failure aborts the deploy before a single byte hits S3.
+
+### 3 · Production environment gate (required reviewer + OIDC)
+
+The deploy workflow pauses at a GitHub Environment gate. A human reviewer (`AaronGrillot98`) must approve before the workflow gets to assume the AWS role via OIDC. The screenshot shows: **Status: Success**, **6m 2s**, the approval timestamp, and the CloudFront URL the run published to.
+
+[![Deploy run with approval](docs/screenshots/05-deploy-run-success.png)](docs/screenshots/05-deploy-run-success.png)
+
+### 4 · Code review and CI discipline
+
+PR-based development with required status checks, code-owner review, and admin-bypassable branch protection on `main`. PR #1 added SLSA L3; PR #2 fixed an OIDC trust-policy issue caught on the first real deploy.
+
+| | |
+|---|---|
+| [![PR #1 — Add SLSA v1 Build Provenance attestation; claim Build L3](docs/screenshots/06-pr1-slsa-l3.png)](docs/screenshots/06-pr1-slsa-l3.png) | [![PR #2 — Fix IAM trust policy: allow environment-scoped OIDC sub](docs/screenshots/07-pr2-iam-trust-fix.png)](docs/screenshots/07-pr2-iam-trust-fix.png) |
+| **PR #1** — SLSA L3 implementation | **PR #2** — debugging arc evidence |
+
+### 5 · Security CI history (fail-closed)
+
+Bandit + pip-audit + gitleaks + tfsec + Trivy fs running on every push and pull request. Findings gate the merge.
+
+[![Security CI run history](docs/screenshots/09-security-ci-history.png)](docs/screenshots/09-security-ci-history.png)
+
+### 6 · Compliance mapping
+
+NIST 800-53 Rev. 5, NIST 800-171 Rev. 2 / CMMC 2.0 Level 2, NIST SSDF v1.1, and SLSA v1.0 — every claim links back to a specific file and line. See [`docs/COMPLIANCE.md`](docs/COMPLIANCE.md).
+
+[![Compliance mapping document](docs/screenshots/08-compliance-doc.png)](docs/screenshots/08-compliance-doc.png)
+
+### 7 · Public, third-party-verifiable transparency
+
+Every signing event lives in Sigstore's public Rekor transparency log. **20 Rekor entries** for this artifact's SHA-256, anyone can independently confirm without contacting this repo or AWS account.
+
+[![Rekor transparency log entries](docs/screenshots/10-rekor-transparency-log.png)](docs/screenshots/10-rekor-transparency-log.png)
+
+### 8 · The repo at a glance
+
+[![Repository home](docs/screenshots/04-repo-home.png)](docs/screenshots/04-repo-home.png)
+
+### 9 · The complete run guide
+
+A single self-contained HTML page that walks a new contributor from `git clone` to a verified live URL in 24 steps. See [`docs/COMPLETE_RUN_GUIDE.html`](docs/COMPLETE_RUN_GUIDE.html).
+
+[![Complete run guide hero](docs/screenshots/03-complete-run-guide.png)](docs/screenshots/03-complete-run-guide.png)
+
 ## What it demonstrates
 
 - **Cryptographic supply chain.** Sigstore keyless signing, DSSE / in-toto attestations, SLSA Build Level 3 provenance bound to the GitHub-hosted workflow's OIDC identity, transparency-logged via Rekor. Trust is **enforced**, not declarative — every claim verifies independently.
