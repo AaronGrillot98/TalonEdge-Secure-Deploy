@@ -1,0 +1,4 @@
+# Runtime dependencies.
+# Pinned to compatible-release (~=) ranges to avoid surprise majors.
+sigstore~=3.0
+pyyaml~=6.0

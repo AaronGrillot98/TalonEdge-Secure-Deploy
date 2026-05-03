@@ -1,0 +1,12 @@
+controls:
+  require_trusted_artifacts: true
+  require_sbom: true
+  require_signature: true
+  require_disk_encryption: true
+  max_patch_age_days: 30
+  failed_login_limit: 5
+  telemetry_backlog_limit: 25
+  required_services:
+    - artifact_verifier
+    - telemetry_forwarder
+    - policy_agent

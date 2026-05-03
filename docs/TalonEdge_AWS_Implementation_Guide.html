@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TalonEdge AWS Implementation Guide</title>
+<style>
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#0b1020;color:#e5e7eb;line-height:1.6}.wrap{max-width:980px;margin:0 auto;padding:28px}.hero{background:linear-gradient(135deg,#111827,#1f2937);border:1px solid #374151;border-radius:24px;padding:28px;margin-bottom:22px}.card{background:#111827;border:1px solid #374151;border-radius:18px;padding:22px;margin:18px 0}h1,h2,h3{line-height:1.2}code,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}pre{background:#020617;border:1px solid #334155;border-radius:14px;padding:16px;overflow:auto}.tag{display:inline-block;border:1px solid #60a5fa;color:#bfdbfe;border-radius:999px;padding:6px 10px;font-size:12px;letter-spacing:.05em}.shot{border-left:4px solid #22c55e;padding:10px 14px;background:#052e16;border-radius:8px}.warn{border-left:4px solid #f59e0b;padding:10px 14px;background:#3b2503;border-radius:8px}a{color:#93c5fd}li{margin:8px 0}
+</style>
+</head>
+<body><div class="wrap">
+<section class="hero"><span class="tag">BEGINNER FRIENDLY AWS DEPLOYMENT GUIDE</span><h1>TalonEdge Secure Deploy V2</h1><p>This guide turns the project into a real AWS-backed SecDevOps portfolio piece using GitHub Actions, Terraform, S3, CloudFront, Docker, and OIDC.</p></section>
+<section class="card"><h2>Plain-English Goal</h2><p>You are building one master project, not several scattered ones. TalonEdge combines AeroSentinel, FieldDeploy-Kit, and Artifact Trust Inspector into one flagship repo. It proves you can secure, validate, deploy, and operate a forward-deployed edge system.</p></section>
+<section class="card"><h2>What you will end with</h2><ul><li>Python CLI that scans telemetry and artifacts</li><li>HTML operator report</li><li>Docker runtime</li><li>GitHub Actions test pipeline</li><li>Terraform-created AWS infrastructure</li><li>Private S3 bucket</li><li>CloudFront HTTPS URL</li><li>GitHub Actions AWS deployment using OIDC</li></ul></section>
+<section class="card"><h2>Step 1: Create your GitHub repo</h2><ol><li>Unzip this folder.</li><li>Create a new GitHub repository named <code>TalonEdge-Secure-Deploy</code>.</li><li>Upload all files from this folder.</li><li>Commit to the <code>main</code> branch.</li></ol><div class="shot">SCREENSHOT: GitHub repo home page showing README and folders.</div></section>
+<section class="card"><h2>Step 2: Test locally</h2><pre>python -m venv .venv
+source .venv/bin/activate
+python -m pip install -e .
+python -m pip install -r requirements-dev.txt
+python -m pytest tests
+python -m talonedge demo</pre><p>Windows activation command:</p><pre>.venv\Scripts\activate</pre><div class="shot">SCREENSHOT: Terminal showing tests passed and TalonEdge demo complete.</div></section>
+<section class="card"><h2>Step 3: Generate the report</h2><pre>mkdir -p reports
+python -m talonedge simulate --output reports/index.html</pre><p>Open <code>reports/index.html</code> in your browser.</p><div class="shot">SCREENSHOT: TalonEdge Operator Report open in your browser.</div></section>
+<section class="card"><h2>Step 4: Test Docker</h2><pre>docker build -t talonedge-secure-deploy .
+docker run --rm talonedge-secure-deploy</pre><div class="shot">SCREENSHOT: Docker build and run success.</div></section>
+<section class="card"><h2>Step 5: Configure AWS</h2><p>Use a normal AWS account. You need permission to create S3, CloudFront, IAM roles, IAM policies, and OIDC provider resources.</p><div class="warn">Do not paste AWS secret access keys into GitHub. This project uses OIDC instead.</div></section>
+<section class="card"><h2>Step 6: Run Terraform</h2><pre>cd infra/aws
+terraform init
+terraform plan -var="github_repo=YOUR-GITHUB-USERNAME/TalonEdge-Secure-Deploy"
+terraform apply -var="github_repo=YOUR-GITHUB-USERNAME/TalonEdge-Secure-Deploy"</pre><p>Type <code>yes</code> when Terraform asks for approval.</p><p>Save these outputs:</p><ul><li><code>s3_bucket_name</code></li><li><code>cloudfront_distribution_id</code></li><li><code>cloudfront_url</code></li><li><code>github_actions_role_arn</code></li></ul><div class="shot">SCREENSHOT: Terraform apply complete with outputs visible.</div></section>
+<section class="card"><h2>Step 7: Add GitHub Actions variables</h2><p>Go to GitHub repo → Settings → Secrets and variables → Actions → Variables.</p><p>Add:</p><pre>AWS_REGION = us-east-1
+AWS_ROLE_ARN = paste github_actions_role_arn
+S3_BUCKET = paste s3_bucket_name
+CLOUDFRONT_DISTRIBUTION_ID = paste cloudfront_distribution_id</pre><div class="shot">SCREENSHOT: GitHub variables page showing variable names only.</div></section>
+<section class="card"><h2>Step 8: Deploy</h2><p>Push a commit to <code>main</code>, or manually run the workflow from GitHub Actions.</p><pre>git add .
+git commit -m "Deploy TalonEdge to AWS"
+git push origin main</pre><p>Open GitHub → Actions → Deploy TalonEdge Report to AWS.</p><div class="shot">SCREENSHOT: GitHub Actions deployment succeeded.</div></section>
+<section class="card"><h2>Step 9: Open the live report</h2><p>Open your Terraform output named <code>cloudfront_url</code>.</p><div class="shot">SCREENSHOT: Live TalonEdge report on CloudFront HTTPS URL.</div></section>
+<section class="card"><h2>What to say in interviews</h2><pre>I built TalonEdge as a forward-deployed secure edge platform simulation.
+It validates deployment artifacts, checks remote edge telemetry, handles degraded connectivity, and publishes a trusted operator report through GitHub Actions and AWS.
+The AWS deployment uses Terraform, S3, CloudFront, and IAM OIDC, so I avoided long-term cloud keys in GitHub.</pre></section>
+<section class="card"><h2>Cleanup to avoid AWS charges</h2><pre>cd infra/aws
+terraform destroy -var="github_repo=YOUR-GITHUB-USERNAME/TalonEdge-Secure-Deploy"</pre><p>Type <code>yes</code>.</p></section>
+</div></body></html>

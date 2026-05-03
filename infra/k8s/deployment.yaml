@@ -1,0 +1,131 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: talonedge
+  labels:
+    # Pod Security Admission enforces the 'restricted' profile in this namespace.
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: talonedge
+  namespace: talonedge
+automountServiceAccountToken: false
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: talonedge
+  namespace: talonedge
+  labels:
+    app: talonedge
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: talonedge
+  template:
+    metadata:
+      labels:
+        app: talonedge
+    spec:
+      serviceAccountName: talonedge
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: talonedge
+          # Pull policy IfNotPresent so 'kind load' or pre-pulled images work.
+          image: ghcr.io/aarongril/talonedge-secure-deploy:latest
+          imagePullPolicy: IfNotPresent
+          args: ["demo"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 10001
+            runAsGroup: 10001
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+              ephemeral-storage: "64Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+              ephemeral-storage: "256Mi"
+          # Liveness/readiness use a cheap import probe — the CLI is a one-shot,
+          # so we treat "the package imports cleanly" as the health signal for
+          # the demo workload. For long-running mode, replace with HTTP probes.
+          livenessProbe:
+            exec:
+              command: ["python", "-c", "import talonedge"]
+            initialDelaySeconds: 5
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command: ["python", "-c", "import talonedge"]
+            initialDelaySeconds: 2
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: dist
+              mountPath: /app/dist
+            - name: reports
+              mountPath: /app/reports
+            - name: telemetry
+              mountPath: /app/telemetry
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: dist
+          emptyDir: {}
+        - name: reports
+          emptyDir: {}
+        - name: telemetry
+          emptyDir: {}
+---
+# Default-deny ingress and egress, except DNS to kube-dns. Add explicit allows
+# for any real outbound destinations (Sigstore, S3, etc.) per environment.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: talonedge-default-deny
+  namespace: talonedge
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53

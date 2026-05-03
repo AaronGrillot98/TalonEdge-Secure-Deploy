@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "talonedge-secure-deploy"
+version = "2.1.0"
+description = "Forward-deployed secure edge platform — Sigstore-verified artifact trust."
+requires-python = ">=3.11"
+dependencies = [
+  "sigstore~=3.0",
+  "pyyaml~=6.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.scripts]
+talonedge = "talonedge.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

@@ -1,0 +1,46 @@
+# Keep the build context tight — fewer files = smaller attack surface and faster builds.
+.git
+.github
+.gitignore
+.venv
+__pycache__
+**/__pycache__
+*.pyc
+.pytest_cache
+.coverage
+htmlcov
+.mypy_cache
+.ruff_cache
+.tox
+node_modules
+dist
+build
+*.egg-info
+__MACOSX
+**/.DS_Store
+
+# Documentation and screenshots have no place in the runtime image.
+docs
+screenshots
+reports
+README.md
+SECURITY.md
+
+# Infra and tests run on the host / in CI, not in the runtime image.
+infra
+tests
+scripts
+requirements-dev.txt
+.github
+
+# Sigstore bundles are produced fresh in CI; never bake stale ones into the image.
+artifacts/*.sigstore.bundle.json
+artifacts/*.sbom.attest.bundle.json
+artifacts/*.sbom.cdx.json
+artifacts/*.sbom.spdx.json
+
+# Editor / OS junk.
+.idea
+.vscode
+*.swp
+Thumbs.db

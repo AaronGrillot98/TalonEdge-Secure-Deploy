@@ -1,0 +1,93 @@
+# Security CI — fails the build on any finding so insecure code never reaches main.
+#
+# Action references are pinned by commit SHA. Re-resolve SHAs with:
+#   ./scripts/pin-actions.sh
+# or one-off:
+#   gh api repos/<owner>/<action>/git/refs/tags/<tag> --jq '.object.sha'
+
+name: Security CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python:
+    name: Python static + deps
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+        with:
+          python-version: "3.11"
+
+      - name: Install project + dev deps
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .
+          python -m pip install -r requirements-dev.txt
+          python -m pip install bandit pip-audit
+
+      - name: Run unit tests
+        run: python -m pytest tests -q
+
+      - name: Bandit (SAST for Python)
+        run: bandit -r src -ll -ii
+
+      - name: pip-audit (vulnerable runtime deps)
+        run: pip-audit --strict --requirement requirements.txt
+
+  secrets:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          fetch-depth: 0
+
+      - uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.7
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # No GITLEAKS_LICENSE -> action runs in OSS mode. Public repos free.
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: "false"
+
+  iac:
+    name: Terraform / IaC scan (tfsec)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
+      - uses: aquasecurity/tfsec-action@b466648d6e39e7c75324f25d83891162a721f2d6 # v1.0.3
+        with:
+          working_directory: infra/aws
+          soft_fail: false
+
+  filesystem:
+    name: Trivy filesystem scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
+      - name: Trivy fs (vuln + misconfig + secrets)
+        uses: aquasecurity/trivy-action@915b19bbe73b92a6cf82a1bc12b087c9a19a5fe2 # 0.28.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: CRITICAL,HIGH
+          exit-code: "1"
+          ignore-unfixed: true
+          format: table
+          # Includes Dockerfile misconfig checks via the misconfig scanner.
+          scanners: vuln,misconfig,secret

@@ -1,0 +1,1141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TalonEdge — Complete Run Guide</title>
+<style>
+  :root {
+    --bg: #0b1020;
+    --bg-2: #0f1730;
+    --panel: #131c3a;
+    --panel-2: #1a2447;
+    --line: #243057;
+    --ink: #e8eefc;
+    --ink-soft: #aab7d8;
+    --ink-mute: #7e8bb3;
+    --accent: #62d6ff;
+    --accent-soft: #2a8db1;
+    --good: #34d399;
+    --warn: #fbbf24;
+    --bad: #f87171;
+    --code-bg: #07101f;
+    --code-line: #1c2747;
+    --shadow: 0 10px 30px rgba(0,0,0,.35);
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(98,214,255,.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 20%, rgba(52,211,153,.06), transparent 60%),
+      var(--bg);
+    color: var(--ink);
+    font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  a { color: var(--accent); text-decoration: none; border-bottom: 1px dashed transparent; }
+  a:hover { border-bottom-color: var(--accent); }
+  code, pre, kbd, samp { font-family: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace; }
+  kbd {
+    background: var(--panel-2); border: 1px solid var(--line); padding: 1px 6px; border-radius: 6px; font-size: 12px;
+  }
+
+  /* Layout */
+  .layout {
+    display: grid;
+    grid-template-columns: 290px minmax(0, 1fr);
+    max-width: 1280px;
+    margin: 0 auto;
+    gap: 36px;
+    padding: 28px 28px 80px;
+  }
+  @media (max-width: 920px) {
+    .layout { grid-template-columns: 1fr; padding: 18px; }
+    nav.toc { position: static !important; max-height: none !important; }
+  }
+
+  /* Hero */
+  header.hero {
+    grid-column: 1 / -1;
+    border-radius: 22px;
+    padding: 36px 36px 30px;
+    background: linear-gradient(135deg, #0e1838 0%, #14224d 60%, #0e1838 100%);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow);
+    position: relative;
+    overflow: hidden;
+  }
+  header.hero::after {
+    content: "";
+    position: absolute; inset: -40% -10% auto auto;
+    width: 540px; height: 540px;
+    background: radial-gradient(closest-side, rgba(98,214,255,.18), transparent 70%);
+    pointer-events: none;
+  }
+  header.hero .eyebrow {
+    display: inline-block; letter-spacing: .14em; text-transform: uppercase;
+    font-size: 12px; color: var(--accent); padding: 6px 12px;
+    border: 1px solid var(--accent-soft); border-radius: 999px; margin-bottom: 14px;
+  }
+  header.hero h1 { margin: 0 0 6px; font-size: 38px; line-height: 1.15; letter-spacing: -.02em; }
+  header.hero h1 span.dim { color: var(--ink-soft); font-weight: 500; }
+  header.hero p.lede { color: var(--ink-soft); margin: 8px 0 18px; max-width: 820px; }
+  header.hero .badges { display: flex; flex-wrap: wrap; gap: 10px; }
+  header.hero .badge {
+    background: var(--panel-2); border: 1px solid var(--line); padding: 6px 12px; border-radius: 999px;
+    font-size: 12px; color: var(--ink-soft);
+  }
+
+  /* TOC */
+  nav.toc {
+    position: sticky; top: 18px; align-self: start;
+    max-height: calc(100vh - 36px); overflow-y: auto;
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 18px 18px 24px;
+    box-shadow: var(--shadow);
+  }
+  nav.toc h3 {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--ink-mute); margin: 0 0 10px;
+  }
+  nav.toc ol { list-style: none; padding: 0; margin: 0; counter-reset: toc; }
+  nav.toc ol > li { counter-increment: toc; margin: 2px 0; }
+  nav.toc a {
+    display: block; padding: 7px 10px 7px 36px; border-radius: 8px;
+    color: var(--ink-soft); border: 1px solid transparent; position: relative;
+    font-size: 14px; line-height: 1.3;
+  }
+  nav.toc a::before {
+    content: counter(toc, decimal-leading-zero);
+    position: absolute; left: 8px; top: 7px;
+    color: var(--ink-mute); font-size: 11px; font-family: ui-monospace;
+  }
+  nav.toc a:hover { background: var(--panel-2); color: var(--ink); border-color: var(--line); }
+  nav.toc a.active {
+    background: linear-gradient(90deg, rgba(98,214,255,.12), transparent);
+    color: var(--ink); border-color: rgba(98,214,255,.35);
+  }
+  nav.toc a.active::before { color: var(--accent); }
+  nav.toc .group-label {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--accent); margin: 14px 0 6px 8px;
+  }
+
+  /* Main */
+  main { min-width: 0; }
+  section.step {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 28px 30px; margin: 22px 0;
+    box-shadow: var(--shadow);
+  }
+  section.step > .step-head {
+    display: flex; align-items: center; gap: 14px; margin: 0 0 6px;
+  }
+  section.step .step-num {
+    flex: 0 0 auto;
+    width: 40px; height: 40px; border-radius: 12px;
+    background: linear-gradient(135deg, rgba(98,214,255,.18), rgba(52,211,153,.18));
+    border: 1px solid rgba(98,214,255,.35);
+    display: grid; place-items: center;
+    color: var(--accent); font-weight: 700;
+  }
+  section.step h2 { margin: 0; font-size: 22px; letter-spacing: -.01em; }
+  section.step h3 { margin: 22px 0 8px; font-size: 16px; color: var(--ink); letter-spacing: .01em; }
+  section.step p, section.step li { color: var(--ink-soft); }
+  section.step ul, section.step ol { padding-left: 22px; }
+  section.step li { margin: 5px 0; }
+  section.step strong { color: var(--ink); }
+
+  /* Phase headers */
+  .phase {
+    grid-column: 1 / -1;
+    margin-top: 30px;
+    padding: 14px 22px;
+    border-left: 4px solid var(--accent);
+    background: linear-gradient(90deg, rgba(98,214,255,.08), transparent 80%);
+    border-radius: 6px;
+  }
+  .phase .phase-eyebrow {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent);
+  }
+  .phase h2 { margin: 2px 0 0; font-size: 20px; }
+  .phase p { margin: 4px 0 0; color: var(--ink-soft); font-size: 14px; }
+
+  /* Callouts */
+  .callout {
+    border-radius: 10px; padding: 14px 16px; margin: 14px 0;
+    border: 1px solid var(--line); background: var(--panel-2);
+    display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: start;
+  }
+  .callout .tag {
+    font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    padding: 4px 10px; border-radius: 999px; align-self: start;
+    border: 1px solid var(--line); background: rgba(255,255,255,.02); white-space: nowrap;
+  }
+  .callout p, .callout ul { margin: 0; }
+  .callout.note  .tag { color: var(--accent); border-color: rgba(98,214,255,.4); background: rgba(98,214,255,.06); }
+  .callout.warn  .tag { color: var(--warn);   border-color: rgba(251,191,36,.4); background: rgba(251,191,36,.08); }
+  .callout.bad   .tag { color: var(--bad);    border-color: rgba(248,113,113,.4); background: rgba(248,113,113,.08); }
+  .callout.tip   .tag { color: var(--good);   border-color: rgba(52,211,153,.4); background: rgba(52,211,153,.08); }
+  .callout.deep  .tag { color: #c4b5fd; border-color: rgba(196,181,253,.4); background: rgba(196,181,253,.08); }
+
+  /* Code blocks */
+  .code-wrap {
+    position: relative;
+    margin: 14px 0;
+    background: var(--code-bg);
+    border: 1px solid var(--code-line);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .code-wrap .code-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 12px;
+    background: rgba(255,255,255,.02);
+    border-bottom: 1px solid var(--code-line);
+    font-size: 12px; color: var(--ink-mute);
+  }
+  .code-wrap .code-head .lang {
+    text-transform: uppercase; letter-spacing: .12em; font-size: 10px;
+  }
+  .code-wrap .copy-btn {
+    appearance: none; background: var(--panel-2);
+    color: var(--ink-soft); border: 1px solid var(--line);
+    padding: 4px 10px; border-radius: 6px; cursor: pointer;
+    font-size: 11px; letter-spacing: .04em;
+    transition: all .15s ease;
+  }
+  .code-wrap .copy-btn:hover { color: var(--ink); border-color: var(--accent-soft); }
+  .code-wrap .copy-btn.copied { color: var(--good); border-color: var(--good); }
+  .code-wrap pre {
+    margin: 0; padding: 14px 16px;
+    overflow-x: auto;
+    font-size: 13.5px; line-height: 1.55;
+    color: #d8e2ff;
+  }
+  .code-wrap pre code .c { color: #6c84b6; font-style: italic; }   /* comment */
+  .code-wrap pre code .k { color: #c5a3ff; }                       /* keyword */
+  .code-wrap pre code .s { color: #a7f3d0; }                       /* string */
+  .code-wrap pre code .v { color: #fde68a; }                       /* variable */
+  .code-wrap pre code .p { color: #fca5a5; }                       /* path / cmd */
+
+  /* Inline code */
+  p code, li code { background: var(--panel-2); border: 1px solid var(--line); padding: 1px 6px; border-radius: 6px; color: #d6e0ff; font-size: 13px; }
+
+  /* Tables */
+  table.matrix {
+    width: 100%; border-collapse: collapse; margin: 12px 0;
+    font-size: 14px; background: var(--code-bg); border-radius: 10px; overflow: hidden;
+    border: 1px solid var(--code-line);
+  }
+  table.matrix th, table.matrix td {
+    text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--code-line); vertical-align: top;
+  }
+  table.matrix th { background: rgba(255,255,255,.03); color: var(--ink); font-weight: 600; }
+  table.matrix tr:last-child td { border-bottom: 0; }
+  table.matrix tr:hover td { background: rgba(98,214,255,.04); }
+
+  /* Architecture diagram */
+  .diagram {
+    margin: 18px 0;
+    padding: 22px;
+    background: var(--code-bg);
+    border: 1px solid var(--code-line);
+    border-radius: 10px;
+    text-align: center;
+  }
+  .diagram svg { max-width: 100%; height: auto; }
+
+  /* Checklist */
+  .checklist { list-style: none; padding: 0; margin: 14px 0; }
+  .checklist li {
+    padding: 10px 14px 10px 44px; position: relative;
+    background: var(--panel-2); border: 1px solid var(--line);
+    border-radius: 10px; margin: 8px 0;
+    color: var(--ink-soft);
+  }
+  .checklist li::before {
+    content: ""; position: absolute; left: 14px; top: 14px;
+    width: 18px; height: 18px; border-radius: 5px;
+    border: 2px solid var(--ink-mute);
+  }
+  .checklist li.done { color: var(--ink); }
+  .checklist li.done::before {
+    background: var(--good); border-color: var(--good);
+  }
+  .checklist li.done::after {
+    content: ""; position: absolute; left: 18px; top: 16px;
+    width: 9px; height: 5px;
+    border-left: 2px solid #062216; border-bottom: 2px solid #062216;
+    transform: rotate(-45deg);
+  }
+
+  /* Output blocks (different from input commands) */
+  .output {
+    background: rgba(52,211,153,.04);
+    border: 1px dashed rgba(52,211,153,.35);
+    color: var(--ink-soft);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin: 8px 0 14px;
+    font-family: ui-monospace, monospace;
+    font-size: 13px;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .output::before {
+    content: "EXPECTED OUTPUT";
+    display: block;
+    font-size: 10px; letter-spacing: .14em; color: var(--good);
+    margin-bottom: 8px; font-family: inherit;
+  }
+
+  /* Footer */
+  footer.foot {
+    grid-column: 1 / -1;
+    margin-top: 30px; padding: 22px;
+    text-align: center; color: var(--ink-mute);
+    border-top: 1px solid var(--line);
+  }
+
+  /* Hide scrollbar polish */
+  nav.toc::-webkit-scrollbar { width: 8px; }
+  nav.toc::-webkit-scrollbar-track { background: transparent; }
+  nav.toc::-webkit-scrollbar-thumb { background: var(--line); border-radius: 8px; }
+  .code-wrap pre::-webkit-scrollbar { height: 8px; }
+  .code-wrap pre::-webkit-scrollbar-thumb { background: var(--line); border-radius: 8px; }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <header class="hero">
+    <span class="eyebrow">Complete Run Guide</span>
+    <h1>TalonEdge Secure Deploy <span class="dim">— start to finish.</span></h1>
+    <p class="lede">
+      Every command, every checkpoint, every gotcha. Follow this guide top-to-bottom and you will go from a fresh
+      clone to a Sigstore-verified report served over a private CloudFront distribution, with the entire pipeline
+      gated by GitHub Actions OIDC and a "production" environment review.
+    </p>
+    <div class="badges">
+      <span class="badge">Python 3.11+</span>
+      <span class="badge">Terraform 1.6+</span>
+      <span class="badge">Cosign keyless (Fulcio + Rekor)</span>
+      <span class="badge">CycloneDX SBOM via Syft</span>
+      <span class="badge">AWS S3 + CloudFront + OIDC</span>
+      <span class="badge">~45 min, first run</span>
+    </div>
+  </header>
+
+  <nav class="toc" aria-label="Table of contents">
+    <h3>Contents</h3>
+    <div class="group-label">Phase 0 · Orientation</div>
+    <ol>
+      <li><a href="#overview">What you are building</a></li>
+      <li><a href="#prereqs">Prerequisites checklist</a></li>
+    </ol>
+    <div class="group-label">Phase 1 · Local setup</div>
+    <ol start="3">
+      <li><a href="#clone">Clone and create a venv</a></li>
+      <li><a href="#install">Install the project</a></li>
+      <li><a href="#tests">Run the test suite</a></li>
+      <li><a href="#demo-untrusted">First demo run (expect UNTRUSTED)</a></li>
+    </ol>
+    <div class="group-label">Phase 2 · Local cryptography</div>
+    <ol start="7">
+      <li><a href="#install-cosign">Install Cosign and Syft</a></li>
+      <li><a href="#sign-locally">Sign + attest the payload locally</a></li>
+      <li><a href="#verify-locally">Verify and watch it turn TRUSTED</a></li>
+    </ol>
+    <div class="group-label">Phase 3 · Container</div>
+    <ol start="10">
+      <li><a href="#docker-pin">Pin the Dockerfile base digest</a></li>
+      <li><a href="#docker-build">Build and run the container</a></li>
+    </ol>
+    <div class="group-label">Phase 4 · GitHub + AWS</div>
+    <ol start="12">
+      <li><a href="#github-repo">Create the GitHub repository</a></li>
+      <li><a href="#aws-setup">Configure AWS credentials</a></li>
+      <li><a href="#terraform">Bootstrap AWS with Terraform</a></li>
+      <li><a href="#repo-vars">Set repository variables</a></li>
+      <li><a href="#prod-env">Create the "production" environment</a></li>
+      <li><a href="#pin-actions">Pin GitHub Actions to commit SHAs</a></li>
+    </ol>
+    <div class="group-label">Phase 5 · Deploy</div>
+    <ol start="18">
+      <li><a href="#first-deploy">Trigger the first deploy</a></li>
+      <li><a href="#approve">Approve the production gate</a></li>
+      <li><a href="#verify-live">Verify the live CloudFront URL</a></li>
+    </ol>
+    <div class="group-label">Phase 6 · Operate</div>
+    <ol start="21">
+      <li><a href="#kubernetes">Optional: deploy to Kubernetes</a></li>
+      <li><a href="#incident">Incident response drill</a></li>
+      <li><a href="#troubleshoot">Troubleshooting</a></li>
+      <li><a href="#glossary">Glossary</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+  <!-- ============== PHASE 0 ============== -->
+  <div class="phase" id="phase-0">
+    <div class="phase-eyebrow">Phase 0 · Orientation</div>
+    <h2>Understand the system before you build it.</h2>
+    <p>Two short sections. Skip them at your own risk — half of the troubleshooting questions later are answered here.</p>
+  </div>
+
+  <section class="step" id="overview">
+    <div class="step-head"><div class="step-num">1</div><h2>What you are building</h2></div>
+    <p>
+      TalonEdge is a forward-deployed secure-edge platform: it verifies a software artifact end to end, evaluates
+      edge-node telemetry against a policy, and publishes an operator-facing report. Trust is <strong>cryptographic</strong>,
+      not declarative. Every artifact must carry:
+    </p>
+    <ul>
+      <li>A Sigstore (Fulcio + Rekor) keyless signature whose certificate identity matches the configured workflow.</li>
+      <li>A DSSE / in-toto SBOM attestation whose subject digest matches the artifact's SHA-256.</li>
+    </ul>
+    <p>
+      A missing bundle, wrong identity, tampered payload, or Rekor mismatch all yield <code>trusted: false</code>.
+      There is no "warn and continue" path.
+    </p>
+
+    <div class="diagram" aria-label="Architecture diagram">
+      <svg viewBox="0 0 880 360" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="g1" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0" stop-color="#1a2447"/><stop offset="1" stop-color="#0e1838"/>
+          </linearGradient>
+          <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="#62d6ff"/>
+          </marker>
+        </defs>
+        <style>
+          .box { fill: url(#g1); stroke: #2a8db1; stroke-width: 1.2; rx: 10; }
+          .box-good { stroke: #34d399; }
+          .box-warn { stroke: #fbbf24; }
+          text { fill: #e8eefc; font: 13px ui-monospace, monospace; }
+          .lbl { fill: #aab7d8; font-size: 11px; }
+          .ttl { fill: #62d6ff; font-size: 11px; letter-spacing: .12em; }
+          line.flow { stroke: #62d6ff; stroke-width: 1.5; marker-end: url(#arr); fill: none; }
+        </style>
+
+        <rect class="box" x="10"  y="20"  width="180" height="80" rx="10"/>
+        <text class="ttl" x="20" y="42">SOURCE</text>
+        <text x="20" y="64">artifacts/payload.bin</text>
+        <text x="20" y="84">manifest.json</text>
+
+        <rect class="box box-warn" x="220" y="20" width="220" height="80" rx="10"/>
+        <text class="ttl" x="230" y="42">CI · GITHUB ACTIONS</text>
+        <text x="230" y="64">syft → CycloneDX SBOM</text>
+        <text x="230" y="84">cosign sign-blob + attest-blob</text>
+
+        <rect class="box box-good" x="470" y="20" width="200" height="80" rx="10"/>
+        <text class="ttl" x="480" y="42">SIGSTORE</text>
+        <text x="480" y="64">Fulcio cert (OIDC)</text>
+        <text x="480" y="84">Rekor transparency log</text>
+
+        <rect class="box" x="700" y="20" width="170" height="80" rx="10"/>
+        <text class="ttl" x="710" y="42">BUNDLES</text>
+        <text x="710" y="64">payload.sigstore.bundle</text>
+        <text x="710" y="84">sbom.attest.bundle</text>
+
+        <line class="flow" x1="190" y1="60" x2="220" y2="60"/>
+        <line class="flow" x1="440" y1="60" x2="470" y2="60"/>
+        <line class="flow" x1="670" y1="60" x2="700" y2="60"/>
+
+        <rect class="box" x="10"  y="160" width="180" height="80" rx="10"/>
+        <text class="ttl" x="20" y="182">TALONEDGE PYTHON</text>
+        <text x="20" y="204">verify_artifact()</text>
+        <text x="20" y="224">re-checks Sigstore</text>
+
+        <rect class="box" x="220" y="160" width="220" height="80" rx="10"/>
+        <text class="ttl" x="230" y="182">POLICY ENGINE</text>
+        <text x="230" y="204">edge_policy.yml</text>
+        <text x="230" y="224">findings + risk score</text>
+
+        <rect class="box" x="470" y="160" width="200" height="80" rx="10"/>
+        <text class="ttl" x="480" y="182">OPERATOR REPORT</text>
+        <text x="480" y="204">reports/index.html</text>
+        <text x="480" y="224">XSS-safe rendering</text>
+
+        <rect class="box box-good" x="700" y="160" width="170" height="80" rx="10"/>
+        <text class="ttl" x="710" y="182">DEPLOY</text>
+        <text x="710" y="204">S3 (private)</text>
+        <text x="710" y="224">CloudFront (HTTPS)</text>
+
+        <line class="flow" x1="785" y1="100" x2="785" y2="160"/>
+        <line class="flow" x1="100" y1="100" x2="100" y2="160"/>
+        <line class="flow" x1="190" y1="200" x2="220" y2="200"/>
+        <line class="flow" x1="440" y1="200" x2="470" y2="200"/>
+        <line class="flow" x1="670" y1="200" x2="700" y2="200"/>
+
+        <rect class="box" x="220" y="280" width="430" height="60" rx="10"/>
+        <text class="ttl" x="230" y="302">AWS · OIDC ROLE (assumed via GitHub OIDC)</text>
+        <text x="230" y="322">s3:Put/Delete/List + cloudfront:CreateInvalidation — least privilege</text>
+        <line class="flow" x1="435" y1="240" x2="435" y2="280"/>
+      </svg>
+    </div>
+
+    <div class="callout note">
+      <span class="tag">Why this matters</span>
+      <p>The v1 of this project checked trust by reading a string field <code>"signature_status": "trusted"</code> from
+      the manifest. Anyone tampering with the artifact could rewrite that string and pass. v2 replaces that with a
+      real cryptographic chain you cannot fake without compromising both Fulcio and Rekor.</p>
+    </div>
+  </section>
+
+  <section class="step" id="prereqs">
+    <div class="step-head"><div class="step-num">2</div><h2>Prerequisites checklist</h2></div>
+    <p>Tick each one off before you start. Most failures in later steps trace back to a missing prereq.</p>
+    <ul class="checklist">
+      <li><strong>Python 3.11+</strong> — <code>python --version</code> (Windows users: install the launcher; <code>py -3 --version</code>).</li>
+      <li><strong>Git</strong> — <code>git --version</code>.</li>
+      <li><strong>GitHub CLI (<code>gh</code>)</strong> — authenticated: <code>gh auth status</code>.</li>
+      <li><strong>AWS account with admin (or scoped) IAM</strong> for the one-time Terraform bootstrap.</li>
+      <li><strong>AWS CLI v2</strong> — <code>aws --version</code>, configured: <code>aws sts get-caller-identity</code>.</li>
+      <li><strong>Terraform 1.6+</strong> — <code>terraform -version</code>.</li>
+      <li><strong>Docker</strong> (optional for local container test) — <code>docker --version</code>.</li>
+      <li><strong>Cosign</strong> and <strong>Syft</strong> (optional for local signing — CI installs its own).</li>
+      <li><strong>jq</strong> (helpful for parsing JSON in commands).</li>
+    </ul>
+    <div class="callout warn">
+      <span class="tag">Windows note</span>
+      <p>The local <code>cosign sign-blob</code> flow opens a browser for OAuth. The local Sigstore <em>verify</em>
+      path requires the <code>sigstore-python</code> TUF cache, which uses symlinks; on Windows enable
+      <em>Developer Mode</em> (Settings → System → For developers) before running <code>python -m talonedge verify</code> against a real bundle.
+      The demo path that produces an "untrusted" report works fine without Developer Mode because no Sigstore call is made.</p>
+    </div>
+  </section>
+
+  <!-- ============== PHASE 1 ============== -->
+  <div class="phase" id="phase-1">
+    <div class="phase-eyebrow">Phase 1 · Local setup</div>
+    <h2>Get the project running on your machine.</h2>
+    <p>By the end of this phase you will have a passing test suite and a clearly-labeled UNTRUSTED demo report.</p>
+  </div>
+
+  <section class="step" id="clone">
+    <div class="step-head"><div class="step-num">3</div><h2>Clone and create a venv</h2></div>
+
+    <div class="code-wrap">
+      <div class="code-head"><span class="lang">bash · macOS / Linux</span></div>
+      <pre><code>git clone https://github.com/&lt;you&gt;/TalonEdge-Secure-Deploy.git
+cd TalonEdge-Secure-Deploy
+python3 -m venv .venv
+source .venv/bin/activate</code></pre>
+    </div>
+
+    <div class="code-wrap">
+      <div class="code-head"><span class="lang">PowerShell · Windows</span></div>
+      <pre><code>git clone https://github.com/&lt;you&gt;/TalonEdge-Secure-Deploy.git
+cd TalonEdge-Secure-Deploy
+py -3 -m venv .venv
+.venv\Scripts\Activate.ps1</code></pre>
+    </div>
+
+    <div class="callout tip">
+      <span class="tag">Why a venv</span>
+      <p><code>sigstore</code> brings in cryptography and TUF dependencies you don't want polluting your global
+      Python. The venv is throwaway — delete <code>.venv/</code> any time to reset.</p>
+    </div>
+  </section>
+
+  <section class="step" id="install">
+    <div class="step-head"><div class="step-num">4</div><h2>Install the project</h2></div>
+    <p>The <code>-e .</code> flag installs the package in editable mode so any code change is picked up without reinstall.</p>
+    <div class="code-wrap">
+      <div class="code-head"><span class="lang">bash</span></div>
+      <pre><code>python -m pip install --upgrade pip
+python -m pip install -e .
+python -m pip install -r requirements-dev.txt</code></pre>
+    </div>
+    <p>Confirm the <code>talonedge</code> entry point is on your PATH:</p>
+    <div class="code-wrap">
+      <div class="code-head"><span class="lang">bash</span></div>
+      <pre><code>python -m talonedge --help</code></pre>
+    </div>
+    <div class="output">usage: talonedge [-h] {demo,scan,report,simulate,queue-demo,verify} ...
+TalonEdge Secure Deploy Platform</div>
+  </section>
+
+  <section class="step" id="tests">
+    <div class="step-head"><div class="step-num">5</div><h2>Run the test suite</h2></div>
+    <p>64 tests cover every negative path — tampered hash, missing bundle, malformed manifest, XSS in every report field, parser corner cases, risk-score boundaries.</p>
+    <div class="code-wrap">
+      <div class="code-head"><span class="lang">bash</span></div>
+      <pre><code>python -m pytest</code></pre>
+    </div>
+    <div class="output">................................................................         [100%]
+64 passed in 0.41s</div>
+    <div class="callout bad">
+      <span class="tag">Stop if red</span>
+      <p>If any test fails, do not move on. Re-check that you ran <code>pip install -e .</code> from the project
+      root, that you are inside the activated venv, and that no stray <code>artifacts/*.bundle.json</code> files
+      from a previous run are confusing the fixtures.</p>
+    </div>
+  </section>
+
+  <section class="step" id="demo-untrusted">
+    <div class="step-head"><div class="step-num">6</div><h2>First demo run (expect UNTRUSTED)</h2></div>
+    <p>Generate the operator report against the bundled sample. There are no Sigstore bundles on disk yet, so the report
+    will <strong>correctly</strong> mark the artifact UNTRUSTED. This is the right behavior — it is the contrast you will
+    feel later when bundles do exist.</p>
+    <div class="code-wrap">
+      <div class="code-head"><span class="lang">bash</span></div>
+      <pre><code>python -m talonedge demo</code></pre>
+    </div>
+    <div class="output">TalonEdge demo complete
+Artifact trusted: False
+  hash_ok:   True  (expected=19e57328... actual=19e57328...)
+  signature: False  (Sigstore bundle not found: artifacts/sample_payload.sigstore.bundle.json)
+  sbom:      False  (Sigstore bundle not found: artifacts/sample_payload.sbom.attest.bundle.json)
+Risk level: CRITICAL (90/100)
+Findings:
+- [critical] ARTIFACT_TRUST: Deployment artifact failed trust verification.
+- [high] SBOM_REQUIRED: Artifact SBOM attestation is missing or did not verify.
+- [critical] SIGNATURE_REQUIRED: Sigstore signature did not verify: ...</div>
+    <p>Open <code>dist/talonedge_report.html</code> in a browser — you will see the same verdict rendered visually.</p>
+  </section>
+
+  <!-- ============== PHASE 2 ============== -->
+  <div class="phase" id="phase-2">
+    <div class="phase-eyebrow">Phase 2 · Local cryptography</div>
+    <h2>Sign and verify a real Sigstore bundle.</h2>
+    <p>This phase is optional but instructive. CI will do it for real later — doing it locally first builds the right mental model.</p>
+  </div>
+
+  <section class="step" id="install-cosign">
+    <div class="step-head"><div class="step-num">7</div><h2>Install Cosign and Syft</h2></div>
+
+    <div class="code-wrap">
+      <div class="code-head"><span class="lang">bash · macOS</span></div>
+      <pre><code>brew install cosign syft</code></pre>
+    </div>
+
+    <div class="code-wrap">
+      <div class="code-head"><span class="lang">bash · Linux</span></div>
+      <pre><code># Cosign
+curl -sLO https://github.com/sigstore/cosign/releases/latest/download/cosign-linux-amd64
+sudo install -m 0755 cosign-linux-amd64 /usr/local/bin/cosign
+rm cosign-linux-amd64
+
+# Syft
+curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sudo sh -s -- -b /usr/local/bin</code></pre>
+    </div>
+
+    <div class="code-wrap">
+      <div class="code-head"><span class="lang">PowerShell · Windows (winget)</span></div>
+      <pre><code>winget install Sigstore.cosign
+winget install Anchore.Syft</code></pre>
+    </div>
+
+    <p>Verify both are installed:</p>
+    <div class="code-wrap">
+      <div class="code-head"><span class="lang">bash</span></div>
+      <pre><code>cosign version
+syft version</code></pre>
+    </div>
+  </section>
+
+  <section class="step" id="sign-locally">
+    <div class="step-head"><div class="step-num">8</div><h2>Sign + attest the payload locally</h2></div>
+    <p>Sigstore keyless signing requires an OIDC identity. Cosign opens a browser for an interactive flow with Google,
+    GitHub, or Microsoft. Use the email you want recorded in Rekor's transparency log.</p>
+
+    <h3>Generate the SBOM</h3>
+    <div class="code-wrap">
+      <div class="code-head"><span class="lang">bash</span></div>
+      <pre><code>syft scan file:artifacts/sample_payload.txt \
+  -o cyclonedx-json=artifacts/sample_payload.sbom.cdx.json</code></pre>
+    </div>
+
+    <h3>Sign the payload</h3>
+    <div class="code-wrap">
+      <div class="code-head"><span class="lang">bash</span></div>
+      <pre><code>COSIGN_YES=true cosign sign-blob \
+  --bundle artifacts/sample_payload.sigstore.bundle.json \
+  artifacts/sample_payload.txt</code></pre>
+    </div>
+    <p>A browser tab opens. Pick your provider; the OIDC token comes back to Cosign, which sends it to Fulcio for a
+    short-lived cert and to Rekor for a transparency-log entry. Both go into the bundle.</p>
+
+    <h3>Attest the SBOM</h3>
+    <div class="code-wrap">
+      <div class="code-head"><span class="lang">bash</span></div>
+      <pre><code>COSIGN_YES=true cosign attest-blob \
+  --predicate artifacts/sample_payload.sbom.cdx.json \
+  --type cyclonedx \
+  --bundle artifacts/sample_payload.sbom.attest.bundle.json \
+  artifacts/sample_payload.txt</code></pre>
+    </div>
+
+    <h3>Update the manifest with your identity</h3>
+    <p>Edit <code>artifacts/sample_artifact_manifest.json</code> and replace the GitHub Actions identity / issuer with
+    yours. For a Google OAuth signature these will be:</p>
+    <div class="code-wrap">
+      <div class="code-head"><span class="lang">json</span></div>
+      <pre><code>"expected_identity": "you@gmail.com",
+"expected_issuer": "https://accounts.google.com"</code></pre>
+    </div>
+
+    <div class="callout deep">
+      <span class="tag">Deep dive</span>
+      <p>The "identity" is the value of the <code>SubjectAlternativeName</code> in the Fulcio-issued certificate.
+      For a CI workflow it is the workflow ref; for a human it is your email. The "issuer" is the OIDC issuer URL.
+      Cosign and TalonEdge both check that <em>both</em> match exactly — so if you signed with your Google email
+      but configure the manifest with a GitHub identity, verification correctly fails.</p>
+    </div>
+  </section>
+
+  <section class="step" id="verify-locally">
+    <div class="step-head"><div class="step-num">9</div><h2>Verify and watch it turn TRUSTED</h2></div>
+    <p>First with Cosign directly:</p>
+    <div class="code-wrap">
+      <div class="code-head"><span class="lang">bash</span></div>
+      <pre><code>cosign verify-blob \
+  --bundle artifacts/sample_payload.sigstore.bundle.json \
+  --certificate-identity "you@gmail.com" \
+  --certificate-oidc-issuer "https://accounts.google.com" \
+  artifacts/sample_payload.txt
+
+cosign verify-blob-attestation \
+  --bundle artifacts/sample_payload.sbom.attest.bundle.json \
+  --type cyclonedx \
+  --certificate-identity "you@gmail.com" \
+  --certificate-oidc-issuer "https://accounts.google.com" \
+  artifacts/sample_payload.txt</code></pre>
+    </div>
+
+    <p>Then with TalonEdge (the Python re-verification path):</p>
+    <div class="code-wrap">
+      <div class="code-head"><span class="lang">bash</span></div>
+      <pre><code>python -m talonedge verify \
+  --payload artifacts/sample_payload.txt \
+  --manifest artifacts/sample_artifact_manifest.json</code></pre>
+    </div>
+    <div class="output">Artifact trusted: True
+  hash_ok:   True  (expected=19e57328... actual=19e57328...)
+  signature: True  (ok)
+  sbom:      True  (ok)
+Risk level: n/a (0/100)
+No findings</div>
+
+    <p>Now run <code>python -m talonedge demo</code> again — the report goes from CRITICAL to clean.</p>
+
+    <div class="callout warn">
+      <span class="tag">Throwaway only</span>
+      <p>These local bundles are tied to your personal email. Do not commit them. Add them to <code>.gitignore</code>
+      now so a stray <code>git add .</code> later does not leak them. They are also already excluded by
+      <code>.dockerignore</code>.</p>
+    </div>
+  </section>
+
+  <!-- ============== PHASE 3 ============== -->
+  <div class="phase" id="phase-3">
+    <div class="phase-eyebrow">Phase 3 · Container</div>
+    <h2>Build the runtime image.</h2>
+    <p>Two short steps. Pin the base image digest, then build and run.</p>
+  </div>
+
+  <section class="step" id="docker-pin">
+    <div class="step-head"><div class="step-num">10</div><h2>Pin the Dockerfile base digest</h2></div>
+    <p>The Dockerfile ships with an intentionally invalid placeholder digest so an unpinned build is impossible. Resolve and pin a real one:</p>
+
+    <div class="code-wrap">
+      <div class="code-head"><span class="lang">bash · macOS / Linux</span></div>
+      <pre><code>DIGEST=$(docker buildx imagetools inspect python:3.11-slim --raw \
+  | jq -r '.manifests[] | select(.platform.architecture=="amd64") | .digest')
+echo "Pinned digest: $DIGEST"
+sed -i.bak "s|REPLACE_WITH_REAL_DIGEST_64_HEX_CHARS|${DIGEST#sha256:}|" Dockerfile
+rm Dockerfile.bak</code></pre>
+    </div>
+
+    <div class="code-wrap">
+      <div class="code-head"><span class="lang">PowerShell · Windows</span></div>
+      <pre><code>$digest = (docker buildx imagetools inspect python:3.11-slim --raw `
+  | ConvertFrom-Json).manifests `
+  | Where-Object { $_.platform.architecture -eq 'amd64' } `
+  | Select-Object -ExpandProperty digest
+$short = $digest -replace '^sha256:', ''
+(Get-Content Dockerfile) -replace 'REPLACE_WITH_REAL_DIGEST_64_HEX_CHARS', $short | Set-Content Dockerfile
+"Pinned digest: $digest"</code></pre>
+    </div>
+  </section>
+
+  <section class="step" id="docker-build">
+    <div class="step-head"><div class="step-num">11</div><h2>Build and run the container</h2></div>
+
+    <div class="code-wrap">
+      <div class="code-head"><span class="lang">bash</span></div>
+      <pre><code>docker build -t talonedge:dev .
+docker run --rm talonedge:dev demo</code></pre>
+    </div>
+
+    <p>Confirm it runs as UID 10001 (not root):</p>
+    <div class="code-wrap">
+      <div class="code-head"><span class="lang">bash</span></div>
+      <pre><code>docker run --rm --entrypoint id talonedge:dev</code></pre>
+    </div>
+    <div class="output">uid=10001 gid=10001</div>
+
+    <div class="callout tip">
+      <span class="tag">Why this matters</span>
+      <p>The Kubernetes manifest enforces <code>runAsNonRoot: true</code>. If the image ran as root, the pod would
+      refuse to start. Confirming UID 10001 here means the container and the K8s SecurityContext are aligned.</p>
+    </div>
+  </section>
+
+  <!-- ============== PHASE 4 ============== -->
+  <div class="phase" id="phase-4">
+    <div class="phase-eyebrow">Phase 4 · GitHub + AWS</div>
+    <h2>Wire up the cloud.</h2>
+    <p>One-time bootstrap. After this phase your <code>main</code> branch is connected to a real AWS deployment via OIDC.</p>
+  </div>
+
+  <section class="step" id="github-repo">
+    <div class="step-head"><div class="step-num">12</div><h2>Create the GitHub repository</h2></div>
+    <div class="code-wrap">
+      <div class="code-head"><span class="lang">bash</span></div>
+      <pre><code>git init -b main
+git add .
+git commit -m "Initial TalonEdge Secure Deploy v2.1"
+gh repo create TalonEdge-Secure-Deploy --public --source=. --remote=origin --push</code></pre>
+    </div>
+    <p>If you prefer private, swap <code>--public</code> for <code>--private</code>. Sigstore keyless works on both.</p>
+  </section>
+
+  <section class="step" id="aws-setup">
+    <div class="step-head"><div class="step-num">13</div><h2>Configure AWS credentials</h2></div>
+    <p>This is the only place where long-lived AWS keys touch your laptop — and only for the one-time Terraform bootstrap. After Step 14 finishes, GitHub Actions assumes a role via OIDC and these keys can be revoked.</p>
+    <div class="code-wrap">
+      <div class="code-head"><span class="lang">bash</span></div>
+      <pre><code>aws configure                        # paste access key + secret + region us-east-1
+aws sts get-caller-identity          # confirm whoami</code></pre>
+    </div>
+  </section>
+
+  <section class="step" id="terraform">
+    <div class="step-head"><div class="step-num">14</div><h2>Bootstrap AWS with Terraform</h2></div>
+    <p>The module creates: a private S3 site bucket, a separate access-log bucket, a CloudFront distribution with OAC,
+    an OIDC provider for GitHub, and a least-privilege deploy role.</p>
+    <div class="code-wrap">
+      <div class="code-head"><span class="lang">bash</span></div>
+      <pre><code>cd infra/aws
+terraform init
+terraform apply -var="github_repo=&lt;your-gh-username&gt;/TalonEdge-Secure-Deploy"</code></pre>
+    </div>
+    <p>Terraform will print the outputs you need. Copy them somewhere — you will paste them into GitHub variables next.</p>
+    <div class="output">cloudfront_distribution_id = "EXXXXXXXXXX"
+cloudfront_url             = "https://dxxxxxxxxxxxx.cloudfront.net"
+github_actions_role_arn    = "arn:aws:iam::123456789012:role/talonedge-secure-deploy-github-deploy-role"
+logs_bucket_name           = "talonedge-secure-deploy-logs-abcd1234"
+s3_bucket_name             = "talonedge-secure-deploy-abcd1234"</div>
+
+    <div class="callout warn">
+      <span class="tag">CloudFront takes ~10 min</span>
+      <p>The first <code>terraform apply</code> waits for CloudFront to propagate edge config. This is normal —
+      grab a coffee. Subsequent applies are seconds.</p>
+    </div>
+  </section>
+
+  <section class="step" id="repo-vars">
+    <div class="step-head"><div class="step-num">15</div><h2>Set repository variables</h2></div>
+    <p>The deploy workflow reads these from <code>vars.*</code>. They are <em>not</em> secrets — they are addresses, not credentials.</p>
+    <div class="code-wrap">
+      <div class="code-head"><span class="lang">bash</span></div>
+      <pre><code>gh variable set AWS_ROLE_ARN              --body "arn:aws:iam::123...:role/talonedge-...-github-deploy-role"
+gh variable set AWS_REGION                --body "us-east-1"
+gh variable set S3_BUCKET                 --body "talonedge-secure-deploy-abcd1234"
+gh variable set CLOUDFRONT_DISTRIBUTION_ID --body "EXXXXXXXXXX"
+gh variable set CLOUDFRONT_DOMAIN          --body "dxxxxxxxxxxxx.cloudfront.net"</code></pre>
+    </div>
+    <p>Confirm with <code>gh variable list</code>.</p>
+  </section>
+
+  <section class="step" id="prod-env">
+    <div class="step-head"><div class="step-num">16</div><h2>Create the "production" environment</h2></div>
+    <p>This is the human-in-the-loop gate. The deploy workflow declares <code>environment: production</code>, so any run pauses for required-reviewer approval before AWS credentials are issued.</p>
+    <ol>
+      <li>Go to <strong>Settings → Environments → New environment</strong> in your repo on GitHub.</li>
+      <li>Name it exactly <code>production</code>.</li>
+      <li>Under <strong>Deployment protection rules</strong>, enable <strong>Required reviewers</strong> and add yourself (and anyone else with deploy authority).</li>
+      <li>Optionally restrict to the <code>main</code> branch under <strong>Deployment branches</strong>.</li>
+      <li>Save.</li>
+    </ol>
+    <div class="callout note">
+      <span class="tag">Why a human gate</span>
+      <p>Even with OIDC the deploy is privileged: it can wipe the S3 bucket via <code>--delete</code>. A required
+      reviewer means a malicious push to <code>main</code> still cannot ship without a human glance.</p>
+    </div>
+  </section>
+
+  <section class="step" id="pin-actions">
+    <div class="step-head"><div class="step-num">17</div><h2>Pin GitHub Actions to commit SHAs</h2></div>
+    <p>The workflows ship pinned to specific commit SHAs that match the noted release tags. If any SHA is stale or
+    you want to lock in the freshest, run the helper:</p>
+    <div class="code-wrap">
+      <div class="code-head"><span class="lang">bash</span></div>
+      <pre><code>./scripts/pin-actions.sh
+git diff .github/workflows
+git add .github/workflows
+git commit -m "Refresh action SHA pins"
+git push</code></pre>
+    </div>
+    <p>To enforce SHA-pinning on every PR, add a CI step:</p>
+    <div class="code-wrap">
+      <div class="code-head"><span class="lang">yaml · paste into security-ci.yml</span></div>
+      <pre><code>- name: Enforce SHA-pinned actions
+  run: ./scripts/pin-actions.sh --check</code></pre>
+    </div>
+  </section>
+
+  <!-- ============== PHASE 5 ============== -->
+  <div class="phase" id="phase-5">
+    <div class="phase-eyebrow">Phase 5 · Deploy</div>
+    <h2>Ship it.</h2>
+    <p>Three steps. Push, approve, verify.</p>
+  </div>
+
+  <section class="step" id="first-deploy">
+    <div class="step-head"><div class="step-num">18</div><h2>Trigger the first deploy</h2></div>
+    <p>Any push to <code>main</code> kicks the workflow. If you committed in Step 17 you are already running.
+    Otherwise:</p>
+    <div class="code-wrap">
+      <div class="code-head"><span class="lang">bash</span></div>
+      <pre><code>git commit --allow-empty -m "trigger first deploy"
+git push origin main
+gh run watch        # optional — live status</code></pre>
+    </div>
+
+    <p>The workflow will run, in order:</p>
+    <table class="matrix">
+      <thead><tr><th>Step</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td>Tests + bandit + pip-audit</td><td>Pre-flight checks. Stops the deploy on any finding.</td></tr>
+        <tr><td>Syft</td><td>Generates a CycloneDX SBOM at <code>artifacts/sample_payload.sbom.cdx.json</code>.</td></tr>
+        <tr><td>cosign sign-blob</td><td>Keyless signature using the workflow's OIDC token; bundle written.</td></tr>
+        <tr><td>cosign attest-blob</td><td>DSSE-wrapped SBOM attestation; bundle written.</td></tr>
+        <tr><td>cosign verify-blob × 2</td><td>Defense-in-depth: re-verify both bundles before deploying.</td></tr>
+        <tr><td><code>talonedge verify</code></td><td>Python re-verification path. Exits non-zero on any failure.</td></tr>
+        <tr><td><code>talonedge simulate</code></td><td>Renders <code>reports/index.html</code>.</td></tr>
+        <tr><td>configure-aws-credentials</td><td>Assumes the deploy role via OIDC. No long-lived keys involved.</td></tr>
+        <tr><td><code>aws s3 sync --delete</code></td><td>Pushes the report to the private S3 bucket.</td></tr>
+        <tr><td><code>cloudfront create-invalidation</code></td><td>Flushes edge caches so the new report is live immediately.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="step" id="approve">
+    <div class="step-head"><div class="step-num">19</div><h2>Approve the production gate</h2></div>
+    <p>The workflow will pause at the <em>Build, sign, attest, verify, deploy</em> job with a "Waiting for review" banner. Approve it.</p>
+    <div class="code-wrap">
+      <div class="code-head"><span class="lang">bash · approve from CLI</span></div>
+      <pre><code>gh run list --workflow="Deploy TalonEdge Report to AWS" --limit 1
+gh run view &lt;run-id&gt;
+# Approve from the GitHub web UI: Actions → run → Review deployments → Approve and deploy.</code></pre>
+    </div>
+  </section>
+
+  <section class="step" id="verify-live">
+    <div class="step-head"><div class="step-num">20</div><h2>Verify the live CloudFront URL</h2></div>
+    <p>Open the URL from the Terraform output (or <code>https://${CLOUDFRONT_DOMAIN}</code> from your variables).</p>
+    <p>You should see the dark-themed operator report with:</p>
+    <ul>
+      <li><strong>Artifact Trusted: TRUE</strong></li>
+      <li><strong>Hash check: VERIFIED</strong>, expected and actual SHA-256 identical.</li>
+      <li><strong>Sigstore signature: VERIFIED</strong>, identity equal to your workflow ref.</li>
+      <li><strong>SBOM attestation: VERIFIED</strong>, predicate type <code>https://cyclonedx.org/bom</code>.</li>
+      <li><strong>Risk level: LOW</strong>, no findings.</li>
+    </ul>
+
+    <div class="callout tip">
+      <span class="tag">Tamper test</span>
+      <p>Edit <code>artifacts/sample_payload.txt</code> (e.g. add a trailing space), commit, push.
+      The next workflow will fail at <code>talonedge verify</code> because the SHA in the manifest no longer matches
+      the payload — and refuses to deploy. That is the v2 trust model doing exactly its job.</p>
+    </div>
+  </section>
+
+  <!-- ============== PHASE 6 ============== -->
+  <div class="phase" id="phase-6">
+    <div class="phase-eyebrow">Phase 6 · Operate</div>
+    <h2>Run it like a real system.</h2>
+    <p>Optional: deploy the same image to Kubernetes. Required reading: incident response and troubleshooting.</p>
+  </div>
+
+  <section class="step" id="kubernetes">
+    <div class="step-head"><div class="step-num">21</div><h2>Optional · Deploy to Kubernetes</h2></div>
+    <p><code>infra/k8s/deployment.yaml</code> is hardened against the Pod Security Standard "restricted" profile. To try it on a local cluster:</p>
+    <div class="code-wrap">
+      <div class="code-head"><span class="lang">bash · kind</span></div>
+      <pre><code>kind create cluster --name talonedge
+kind load docker-image talonedge:dev --name talonedge
+kubectl apply -f infra/k8s/deployment.yaml
+kubectl -n talonedge get pods -w</code></pre>
+    </div>
+
+    <p>Things to verify the manifest enforces:</p>
+    <ul>
+      <li><code>runAsNonRoot</code>, <code>readOnlyRootFilesystem</code>, <code>allowPrivilegeEscalation: false</code>.</li>
+      <li><code>capabilities: { drop: ["ALL"] }</code>, <code>seccompProfile: RuntimeDefault</code>.</li>
+      <li>CPU/memory/ephemeral-storage requests and limits.</li>
+      <li>Liveness + readiness probes.</li>
+      <li>Default-deny <code>NetworkPolicy</code> with DNS-only egress to <code>kube-system</code>.</li>
+      <li><code>automountServiceAccountToken: false</code> on the SA and pod.</li>
+    </ul>
+  </section>
+
+  <section class="step" id="incident">
+    <div class="step-head"><div class="step-num">22</div><h2>Incident response drill</h2></div>
+    <p>Simulate a SEV-2 (suspicious artifact blocked before deployment). On a feature branch:</p>
+    <div class="code-wrap">
+      <div class="code-head"><span class="lang">bash</span></div>
+      <pre><code>git checkout -b drill/tamper
+echo "compromised" &gt;&gt; artifacts/sample_payload.txt
+git commit -am "drill: tamper payload"
+git push -u origin drill/tamper
+gh pr create --fill</code></pre>
+    </div>
+    <p>The Security CI must fail. Walk through the failure:</p>
+    <ol>
+      <li>Open the failing run. Capture the URL.</li>
+      <li>Note the failed job name and the exact step.</li>
+      <li>Inspect the artifact hash printed in <code>talonedge verify</code> — both expected and actual.</li>
+      <li>Document root cause (the tamper) and the corrective action (revert).</li>
+      <li>Close the PR.</li>
+    </ol>
+    <p>This is the workflow described in <code>docs/incident_response_runbook.md</code> — the drill makes it muscle memory.</p>
+  </section>
+
+  <section class="step" id="troubleshoot">
+    <div class="step-head"><div class="step-num">23</div><h2>Troubleshooting</h2></div>
+
+    <table class="matrix">
+      <thead><tr><th>Symptom</th><th>Cause</th><th>Fix</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>Reference does not exist</code> on a GitHub Action</td>
+          <td>One of the pinned SHAs is stale or wrong.</td>
+          <td>Run <code>./scripts/pin-actions.sh</code> and commit the result.</td>
+        </tr>
+        <tr>
+          <td><code>OSError: WinError 1314</code> (symlink) on Windows</td>
+          <td>sigstore-python's TUF cache uses symlinks; Windows requires Developer Mode for unprivileged users.</td>
+          <td>Enable Developer Mode (Settings → System → For developers), or only run paths that don't trigger live verification.</td>
+        </tr>
+        <tr>
+          <td><code>cosign sign-blob</code> fails with <code>provider not configured</code></td>
+          <td>No OIDC ambient token; Cosign expected an interactive flow.</td>
+          <td>Run from an interactive terminal so Cosign can open a browser, or set <code>--identity-token</code> manually.</td>
+        </tr>
+        <tr>
+          <td><code>terraform apply</code> hangs at CloudFront for 10+ minutes</td>
+          <td>Normal — CloudFront edge propagation.</td>
+          <td>Wait. Don't Ctrl-C — interrupting mid-create can leave a partial distribution.</td>
+        </tr>
+        <tr>
+          <td>Workflow blocked at "Waiting for review"</td>
+          <td>The <code>production</code> environment requires a reviewer.</td>
+          <td>Approve via Actions → run → Review deployments. Confirm you are listed under Required reviewers.</td>
+        </tr>
+        <tr>
+          <td><code>talonedge verify</code> says "subject digest does not match"</td>
+          <td>SBOM was generated against a different payload than the one you signed.</td>
+          <td>Re-run <code>syft</code> + <code>cosign attest-blob</code> against the same payload, in order.</td>
+        </tr>
+        <tr>
+          <td><code>403 AccessDenied</code> from S3 in the deploy step</td>
+          <td>Repo is not at <code>refs/heads/main</code> when assuming the role.</td>
+          <td>Confirm you pushed to <code>main</code>, not a fork or branch. The IAM trust policy is scoped to <code>refs/heads/main</code>.</td>
+        </tr>
+        <tr>
+          <td><code>docker build</code> fails with "manifest digest mismatch"</td>
+          <td>You skipped Step 10 — the placeholder digest is intentionally invalid.</td>
+          <td>Re-run the digest pinning script.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="step" id="glossary">
+    <div class="step-head"><div class="step-num">24</div><h2>Glossary</h2></div>
+    <table class="matrix">
+      <thead><tr><th>Term</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td>Fulcio</td><td>Sigstore's free X.509 cert authority. Issues short-lived certs bound to OIDC identities.</td></tr>
+        <tr><td>Rekor</td><td>Sigstore's append-only transparency log. Every keyless signing event is recorded here.</td></tr>
+        <tr><td>DSSE</td><td>Dead Simple Signing Envelope — the wrapper format used for in-toto attestations.</td></tr>
+        <tr><td>in-toto Statement</td><td>JSON object linking a subject (digest) to a predicate (e.g. CycloneDX SBOM).</td></tr>
+        <tr><td>SBOM</td><td>Software Bill of Materials. CycloneDX and SPDX are the two common formats.</td></tr>
+        <tr><td>OIDC</td><td>OpenID Connect. Used here for both Sigstore (signing identity) and AWS (deploy role).</td></tr>
+        <tr><td>OAC</td><td>CloudFront Origin Access Control. Modern replacement for OAI; uses sigv4.</td></tr>
+        <tr><td>BucketOwnerEnforced</td><td>S3 ownership setting that disables ACLs entirely.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <footer class="foot">
+    <p>TalonEdge Secure Deploy v2.1 · Generated guide · Trust by cryptography, not by string.</p>
+  </footer>
+
+  </main>
+</div>
+
+<script>
+  // Copy buttons on every code block.
+  document.querySelectorAll('.code-wrap').forEach(wrap => {
+    const head = wrap.querySelector('.code-head');
+    const btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.textContent = 'Copy';
+    btn.addEventListener('click', async () => {
+      const code = wrap.querySelector('pre code') || wrap.querySelector('pre');
+      const text = code.innerText;
+      try {
+        await navigator.clipboard.writeText(text);
+        btn.textContent = 'Copied';
+        btn.classList.add('copied');
+      } catch (err) {
+        // Fallback for older browsers / file:// without clipboard permissions.
+        const ta = document.createElement('textarea');
+        ta.value = text; document.body.appendChild(ta); ta.select();
+        document.execCommand('copy'); ta.remove();
+        btn.textContent = 'Copied';
+        btn.classList.add('copied');
+      }
+      setTimeout(() => {
+        btn.textContent = 'Copy';
+        btn.classList.remove('copied');
+      }, 1600);
+    });
+    head.appendChild(btn);
+  });
+
+  // TOC active-section highlighting via IntersectionObserver.
+  const sections = document.querySelectorAll('section.step[id]');
+  const tocLinks = document.querySelectorAll('nav.toc a[href^="#"]');
+  const linkById = new Map();
+  tocLinks.forEach(a => linkById.set(a.getAttribute('href').slice(1), a));
+
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      const link = linkById.get(e.target.id);
+      if (!link) return;
+      if (e.isIntersecting) {
+        tocLinks.forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-25% 0px -65% 0px', threshold: 0.01 });
+
+  sections.forEach(s => obs.observe(s));
+</script>
+
+</body>
+</html>

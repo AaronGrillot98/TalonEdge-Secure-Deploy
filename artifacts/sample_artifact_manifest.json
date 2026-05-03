@@ -1,0 +1,10 @@
+{
+  "name": "talonedge-edge-agent",
+  "version": "2.0.0",
+  "sha256": "19e57328f278bbaacb1fff3952a8bd2028ba1ab432388680380ccbeb51b04197",
+  "sigstore_bundle": "sample_payload.sigstore.bundle.json",
+  "sbom_attestation": "sample_payload.sbom.attest.bundle.json",
+  "expected_identity": "https://github.com/AaronGrillot98/TalonEdge-Secure-Deploy/.github/workflows/deploy-aws.yml@refs/heads/main",
+  "expected_issuer": "https://token.actions.githubusercontent.com",
+  "notes": "The bundle and attestation files are produced by the deploy-aws workflow (cosign sign-blob / cosign attest-blob with --bundle). Until the workflow has run, those files are absent and the artifact will correctly verify as UNTRUSTED — that is the honest behavior."
+}

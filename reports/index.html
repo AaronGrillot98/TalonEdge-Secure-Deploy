@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang='en'>
+<head>
+<meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'>
+<title>TalonEdge Operator Report</title>
+<style>
+body { margin:0; font-family: Arial, sans-serif; background:#0d1117; color:#e6edf3; }
+.wrap { max-width:1050px; margin:0 auto; padding:28px; }
+.hero { border:1px solid #30363d; border-radius:22px; padding:26px; background:linear-gradient(135deg,#111827,#162033); }
+.grid { display:grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap:16px; margin-top:18px; }
+.card { background:#161b22; border:1px solid #30363d; border-radius:18px; padding:18px; }
+.big { font-size:36px; font-weight:800; }
+.badge { display:inline-block; padding:6px 10px; border-radius:999px; border:1px solid #3b82f6; color:#bfdbfe; font-size:12px; letter-spacing:.04em; }
+table { width:100%; border-collapse:collapse; margin-top:14px; }
+th,td { border-bottom:1px solid #30363d; padding:12px; text-align:left; }
+th { color:#93c5fd; }
+.code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color:#a7f3d0; word-break:break-all; }
+.small { color:#9ca3af; font-size:14px; }
+</style>
+</head>
+<body>
+<div class='wrap'>
+  <section class='hero'>
+    <span class='badge'>SECURE EDGE DEPLOYMENT REPORT</span>
+    <h1>TalonEdge Operator Report</h1>
+    <p class='small'>Generated 2026-04-30 17:35 UTC. This report summarizes artifact trust, edge-node telemetry, policy findings, and operational risk.</p>
+    <div class='grid'>
+      <div class='card'><div class='small'>Risk Level</div><div class='big'>LOW</div><p>0/100</p></div>
+      <div class='card'><div class='small'>Artifact Trusted</div><div class='big'>TRUE</div><p>talonedge-edge-agent v1.0.0</p></div>
+      <div class='card'><div class='small'>Edge Node</div><div class='big'>edge-node-01</div><p>degraded</p></div>
+    </div>
+  </section>
+
+  <section class='card'>
+    <h2>Artifact Verification</h2>
+    <p><strong>Signature status:</strong> trusted</p>
+    <p><strong>Expected SHA256:</strong> <span class='code'>19e57328f278bbaacb1fff3952a8bd2028ba1ab432388680380ccbeb51b04197</span></p>
+    <p><strong>Actual SHA256:</strong> <span class='code'>19e57328f278bbaacb1fff3952a8bd2028ba1ab432388680380ccbeb51b04197</span></p>
+    <p><strong>SBOM present:</strong> TRUE</p>
+  </section>
+
+  <section class='card'>
+    <h2>Policy Findings</h2>
+    <table><thead><tr><th>Severity</th><th>Control</th><th>Message</th></tr></thead><tbody><tr><td colspan='3'>No findings detected.</td></tr></tbody></table>
+  </section>
+
+  <section class='card'>
+    <h2>Operator Notes</h2>
+    <p>This project models secure deployment behavior for disconnected or degraded edge environments: verify what you deploy, keep telemetry flowing, enforce policy, and report risk clearly.</p>
+  </section>
+</div>
+</body>
+</html>

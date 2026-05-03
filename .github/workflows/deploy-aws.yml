@@ -1,0 +1,149 @@
+# Production deploy.
+#
+#   1. Build the operator report.
+#   2. Generate a real SBOM with Syft.
+#   3. Sign the payload + attest the SBOM with Cosign keyless (Fulcio + Rekor)
+#      using the workflow's OIDC token — same identity story as the AWS deploy.
+#   4. Re-verify locally before publishing (defense in depth: catches a
+#      tampered Rekor entry just-in-time).
+#   5. Run TalonEdge with the trust policy enforced.
+#   6. Sync to S3 and invalidate CloudFront.
+#
+# Action references are pinned by commit SHA. Re-resolve SHAs with:
+#   ./scripts/pin-actions.sh
+
+name: Deploy TalonEdge Report to AWS
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  id-token: write   # Required for Sigstore keyless + AWS OIDC.
+  contents: read
+
+# Serialize deployments — back-to-back pushes won't race the s3 sync + invalidation.
+concurrency:
+  group: deploy-aws
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build, sign, attest, verify, deploy
+    runs-on: ubuntu-latest
+    # Required reviewers configured on the GitHub 'production' environment in
+    # the repo settings UI (Environments → production → Required reviewers).
+    environment:
+      name: production
+      url: https://${{ vars.CLOUDFRONT_DOMAIN }}
+
+    env:
+      EXPECTED_IDENTITY: https://github.com/${{ github.repository }}/.github/workflows/deploy-aws.yml@refs/heads/main
+      EXPECTED_ISSUER: https://token.actions.githubusercontent.com
+      PAYLOAD: artifacts/sample_payload.txt
+      SBOM_FILE: artifacts/sample_payload.sbom.cdx.json
+      SIG_BUNDLE: artifacts/sample_payload.sigstore.bundle.json
+      ATT_BUNDLE: artifacts/sample_payload.sbom.attest.bundle.json
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+
+      - name: Set up Python
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+        with:
+          python-version: "3.11"
+
+      - name: Install project + test deps
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install -e .
+          python -m pip install -r requirements-dev.txt
+
+      - name: Run unit tests
+        run: python -m pytest tests -q
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@dc72c7d5c4d10cd6bcb8cf6e3fd625a9e5e537da # v3.7.0
+
+      - name: Install syft
+        uses: anchore/sbom-action/download-syft@61119d458adab75f756bc0b9e4bde25725f86a7a # v0.17.4
+
+      - name: Generate SBOM (CycloneDX)
+        run: |
+          syft scan "file:${PAYLOAD}" -o "cyclonedx-json=${SBOM_FILE}"
+          echo "SBOM:"
+          jq '.bomFormat, .specVersion, (.components | length)' "${SBOM_FILE}"
+
+      - name: Cosign sign-blob (keyless, OIDC from GitHub Actions)
+        env:
+          COSIGN_YES: "true"
+        run: |
+          cosign sign-blob --bundle "${SIG_BUNDLE}" "${PAYLOAD}"
+
+      - name: Cosign attest-blob (CycloneDX SBOM, keyless)
+        env:
+          COSIGN_YES: "true"
+        run: |
+          cosign attest-blob \
+            --predicate "${SBOM_FILE}" \
+            --type cyclonedx \
+            --bundle "${ATT_BUNDLE}" \
+            "${PAYLOAD}"
+
+      - name: Cosign verify-blob (defense-in-depth, before deploy)
+        run: |
+          cosign verify-blob \
+            --bundle "${SIG_BUNDLE}" \
+            --certificate-identity "${EXPECTED_IDENTITY}" \
+            --certificate-oidc-issuer "${EXPECTED_ISSUER}" \
+            "${PAYLOAD}"
+
+      - name: Cosign verify-blob-attestation (defense-in-depth)
+        run: |
+          cosign verify-blob-attestation \
+            --bundle "${ATT_BUNDLE}" \
+            --type cyclonedx \
+            --certificate-identity "${EXPECTED_IDENTITY}" \
+            --certificate-oidc-issuer "${EXPECTED_ISSUER}" \
+            "${PAYLOAD}"
+
+      - name: TalonEdge verify (Python re-verification path)
+        run: |
+          python -m talonedge verify \
+            --payload "${PAYLOAD}" \
+            --manifest artifacts/sample_artifact_manifest.json \
+            --identity "${EXPECTED_IDENTITY}" \
+            --issuer "${EXPECTED_ISSUER}"
+
+      - name: Generate operator report
+        run: |
+          mkdir -p reports
+          python -m talonedge simulate \
+            --output reports/index.html \
+            --identity "${EXPECTED_IDENTITY}" \
+            --issuer "${EXPECTED_ISSUER}"
+          test -f reports/index.html
+
+      - name: Configure AWS credentials with OIDC
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Deploy report to S3
+        run: aws s3 sync reports/ "s3://${{ vars.S3_BUCKET }}/" --delete
+
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}" \
+            --paths "/*"
+
+      - name: Deployment summary
+        run: |
+          echo "TalonEdge deploy complete."
+          echo "URL: https://${{ vars.CLOUDFRONT_DOMAIN }}"

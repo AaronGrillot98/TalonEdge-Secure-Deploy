@@ -1,0 +1,34 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Build artifacts
+dist/
+build/
+
+# Local Sigstore bundles & SBOMs (regenerate per signing identity; never commit)
+artifacts/*.sigstore.bundle.json
+artifacts/*.sbom.attest.bundle.json
+artifacts/*.sbom.cdx.json
+artifacts/*.sbom.spdx.json
+
+# Terraform local state — must not be committed (contains secrets / IDs)
+infra/**/.terraform/
+infra/**/*.tfstate
+infra/**/*.tfstate.backup
+infra/**/.terraform.lock.hcl
+infra/**/*.tfvars
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

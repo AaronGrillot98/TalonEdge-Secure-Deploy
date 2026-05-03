@@ -1,0 +1,3 @@
+TalonEdge sample payload
+Version: 1.0.0
+Purpose: simulated edge deployment package

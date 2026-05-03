@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>TalonEdge Beginner Guide</title>
+<style>body{font-family:Arial,sans-serif;background:#f6f7fb;color:#111827;line-height:1.6;margin:0}.wrap{max-width:960px;margin:auto;padding:30px}.hero{background:#111827;color:white;border-radius:24px;padding:28px}code,pre{background:#0f172a;color:#d1fae5;border-radius:12px}pre{padding:16px;overflow:auto}.card{background:white;border:1px solid #e5e7eb;border-radius:18px;padding:20px;margin:18px 0}h2{margin-top:30px}.shot{background:#fff7ed;border-left:5px solid #f97316;padding:12px;border-radius:10px}</style></head>
+<body><div class="wrap"><section class="hero"><h1>TalonEdge Secure Deploy Platform</h1><p>Beginner-friendly setup guide for an Anduril-targeted SecDevOps flagship project.</p></section>
+<div class="card"><h2>What you are building</h2><p>You are building a small secure edge-deployment lab. It checks whether a deployment artifact can be trusted, reads edge telemetry, applies policy-as-code, scores risk, and creates an HTML operator report.</p></div>
+<div class="card"><h2>Apps/tools you need</h2><ul><li>GitHub account</li><li>Python 3.10 or newer</li><li>VS Code on PC/Mac, or GitHub Codespaces on iPhone/iPad</li><li>Optional: Docker Desktop</li></ul></div>
+<div class="card"><h2>iPhone/iPad path</h2><p>Use GitHub Codespaces. Upload this folder to a GitHub repo, open the repo in Codespaces, then run the commands below in the Codespaces terminal.</p></div>
+<div class="card"><h2>Step 1: Open the project folder</h2><pre><code>cd TalonEdge-Secure-Deploy</code></pre><div class="shot"><strong>Screenshot 1:</strong> Take a screenshot of the file tree showing README.md, src, policies, artifacts, infra, and .github.</div></div>
+<div class="card"><h2>Step 2: Create the Python environment</h2><pre><code>python -m venv .venv
+source .venv/bin/activate
+</code></pre><p>On Windows PowerShell use:</p><pre><code>.venv\Scripts\activate
+</code></pre></div>
+<div class="card"><h2>Step 3: Run the full demo</h2><pre><code>python run_talonedge.py demo</code></pre><div class="shot"><strong>Screenshot 2:</strong> Capture the terminal output showing artifact trusted, risk level, findings, and report path.</div></div>
+<div class="card"><h2>Step 4: Run the scan command</h2><pre><code>python run_talonedge.py scan</code></pre><div class="shot"><strong>Screenshot 3:</strong> Capture the scan output showing expected hash, actual hash, and risk level.</div></div>
+<div class="card"><h2>Step 5: Open the report</h2><p>Open this file:</p><pre><code>dist/talonedge_report.html</code></pre><div class="shot"><strong>Screenshot 4:</strong> Capture the report hero section and policy findings table.</div></div>
+<div class="card"><h2>Step 6: Run tests</h2><pre><code>python -m unittest discover -s tests -p "test_*.py"</code></pre><div class="shot"><strong>Screenshot 5:</strong> Capture passing tests.</div></div>
+<div class="card"><h2>Step 7: Push to GitHub</h2><pre><code>git init
+git add .
+git commit -m "Initial TalonEdge secure deploy project"
+git branch -M main
+git remote add origin YOUR_GITHUB_REPO_URL
+git push -u origin main</code></pre><div class="shot"><strong>Screenshot 6:</strong> Capture GitHub Actions passing after push.</div></div>
+<div class="card"><h2>How to explain this in an interview</h2><p>“I built this to prove I can connect security, deployment, automation, and operations. It models a forward-deployed edge node where software artifacts need to be verified, telemetry may be delayed, and operators need clear risk reporting.”</p></div>
+</div></body></html>

@@ -1,0 +1,14 @@
+{
+  "node_id": "edge-node-01",
+  "environment": "forward-deployed-training-range",
+  "network_status": "degraded",
+  "disk_encrypted": true,
+  "last_patch_days": 18,
+  "failed_login_count": 4,
+  "telemetry_backlog": 12,
+  "critical_services": {
+    "artifact_verifier": "running",
+    "telemetry_forwarder": "running",
+    "policy_agent": "running"
+  }
+}
