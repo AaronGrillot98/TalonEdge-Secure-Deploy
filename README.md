@@ -58,6 +58,16 @@ Bandit + pip-audit + gitleaks + tfsec + Trivy fs running on every push and pull 
 
 [![Security CI run history](docs/screenshots/09-security-ci-history.png)](docs/screenshots/09-security-ci-history.png)
 
+### 5.1 · Unified PR comment via [sarif-merge](https://github.com/AaronGrillot98/sarif-merge)
+
+Each scanner emits SARIF; a sibling project ([`sarif-merge`](https://github.com/AaronGrillot98/sarif-merge)) downloads them, deduplicates overlapping findings, and bumps severity for cross-scanner consensus. The reviewer sees one PR comment instead of five tabs:
+
+[![Merged scanner comment on a PR](docs/screenshots/16-pr5-merged-comment.png)](docs/screenshots/16-pr5-merged-comment.png)
+
+The Security CI workflow now has a `merge` job (`needs: [python, secrets, iac, filesystem]`) that runs after all four scanners and posts a single deduplicated summary. Repeat runs update the same comment via a stable marker rather than stacking. See the workflow run that produced this comment:
+
+[![Security CI with merge job](docs/screenshots/17-security-ci-with-merge.png)](docs/screenshots/17-security-ci-with-merge.png)
+
 ### 6 · Compliance mapping
 
 NIST 800-53 Rev. 5, NIST 800-171 Rev. 2 / CMMC 2.0 Level 2, NIST SSDF v1.1, and SLSA v1.0 — every claim links back to a specific file and line. See [`docs/COMPLIANCE.md`](docs/COMPLIANCE.md).
