@@ -88,6 +88,20 @@ def evaluate_policy(policy: dict, telemetry: dict, artifact_result: dict) -> lis
                 }
             )
 
+    # require_provenance defaults to False here so existing callers and tests
+    # that don't supply a SLSA Provenance attestation are not retroactively
+    # broken. The deployed edge_policy.yml turns it on.
+    if _as_bool(controls.get("require_provenance", False), False):
+        provenance = artifact_result.get("provenance") or {}
+        if not provenance.get("verified"):
+            findings.append(
+                {
+                    "control": "PROVENANCE_REQUIRED",
+                    "severity": "high",
+                    "message": "SLSA Provenance attestation did not verify: " + str(provenance.get("reason", "unknown")),
+                }
+            )
+
     max_patch_days = _as_int(controls.get("max_patch_age_days", 30), 30)
     if _as_int(telemetry.get("last_patch_days", 999), 999) > max_patch_days:
         findings.append(

@@ -43,6 +43,9 @@ def write_html_report(result: dict, out_path: Path) -> Path:
     telemetry = result["telemetry"]
     sig = artifact.get("signature", {})
     sbom = artifact.get("sbom", {})
+    provenance = artifact.get("provenance", {})
+    prov_summary = provenance.get("summary", {}) or {}
+    slsa_l3 = bool(artifact.get("slsa_build_l3", False))
     generated = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     html_doc = f"""<!doctype html>
 <html lang='en'>
@@ -95,6 +98,17 @@ th {{ color:#93c5fd; }}
   <section class='card'>
     <h2>Attested SBOM Components</h2>
     <table><thead><tr><th>Name</th><th>Version</th></tr></thead><tbody>{component_rows(artifact.get('components', []))}</tbody></table>
+  </section>
+
+  <section class='card'>
+    <h2>SLSA Build Provenance</h2>
+    <p><strong>Verification:</strong> {_verdict(provenance.get('verified', False))} <span class='small'>({html.escape(str(provenance.get('predicate_type', 'n/a')))})</span></p>
+    <p class='reason'>{html.escape(str(provenance.get('reason', '')))}</p>
+    <p><strong>SLSA Build L3 claim:</strong> {_verdict(slsa_l3)}</p>
+    <p><strong>Builder:</strong> <span class='code'>{html.escape(str(prov_summary.get('builder_id', 'n/a')))}</span></p>
+    <p><strong>Build type:</strong> <span class='code'>{html.escape(str(prov_summary.get('build_type', 'n/a')))}</span></p>
+    <p><strong>Invocation:</strong> <span class='code'>{html.escape(str(prov_summary.get('invocation_id', 'n/a')))}</span></p>
+    <p><strong>Started:</strong> <span class='code'>{html.escape(str(prov_summary.get('started_on', 'n/a')))}</span></p>
   </section>
 
   <section class='card'>
