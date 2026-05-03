@@ -1,0 +1,16 @@
+# Trivy ignore file — every entry is a documented, conscious decision.
+# Reviewed each push: if a use case changes, re-evaluate.
+
+# AWS-0011 — CloudFront does not utilize a WAF.
+# Defer: WAF web ACLs cost ~$5/month plus per-rule fees and there is no
+# untrusted user traffic to filter on this static-site demo. If this serves
+# real PII or login flows, add a WAFv2 web_acl_association resource.
+AVD-AWS-0011
+
+# AWS-0132 — S3 bucket does not encrypt data with a customer-managed KMS key.
+# Defer (site bucket + logs bucket): both use AES256 with S3-managed keys.
+# Operationally simpler (no key rotation, no IAM policy interactions) and
+# adequate for a public static-content bucket. KMS CMK is appropriate when
+# (a) the bucket holds regulated data, or (b) you need separate key access
+# controls from bucket access controls. Neither applies here.
+AVD-AWS-0132

@@ -67,7 +67,13 @@ jobs:
         run: python -m pytest tests -q
 
       - name: Install cosign
-        uses: sigstore/cosign-installer@dc72c7d5c4d10cd6bcb8cf6e3fd625a9e5e537da # v3.7.0
+        # cosign-installer SHA above resolves to v3.5.0 (defaults to cosign 2.2.x,
+        # which produces the legacy bundle format). Pin cosign-release explicitly
+        # to v2.4.x so we get the v0.3 Sigstore Bundle that sigstore-python 4.x
+        # can parse via Bundle.from_json.
+        uses: sigstore/cosign-installer@dc72c7d5c4d10cd6bcb8cf6e3fd625a9e5e537da # v3.5.0
+        with:
+          cosign-release: 'v2.4.3'
 
       - name: Install syft
         uses: anchore/sbom-action/download-syft@61119d458adab75f756bc0b9e4bde25725f86a7a # v0.17.4

@@ -89,5 +89,7 @@ jobs:
           exit-code: "1"
           ignore-unfixed: true
           format: table
+          # Documented allow-list of misconfigs we accept (see .trivyignore).
+          trivyignores: .trivyignore
           # Includes Dockerfile misconfig checks via the misconfig scanner.
           scanners: vuln,misconfig,secret
