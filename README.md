@@ -173,14 +173,7 @@ GitHub Actions deployment workflow:
 .github/workflows/deploy-aws.yml
 ```
 
-## Screenshots to capture
 
-1. Local CLI scan running
-2. Docker build/run success
-3. Terraform apply outputs
-4. GitHub Actions successful deployment
-5. Live CloudFront report
-6. README architecture section
 
 ## Interview talk track
 
